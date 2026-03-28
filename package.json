@@ -1,0 +1,14 @@
+{
+  "name": "goose-token-tracker",
+  "version": "2.0.0",
+  "description": "Reverse proxy for tracking token usage between Goose and local vLLM server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "express": "^4.21.0"
+  }
+}

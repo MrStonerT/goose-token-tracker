@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goose Token Tracker</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><span>Goose</span> Token Tracker</h1>
+      <div class="status-bar">
+        <span id="vllm-status"><span class="status-dot unknown"></span> Checking vLLM...</span>
+        <span id="uptime"></span>
+        <span id="hw-info"></span>
+        <span><span class="live-dot"></span> Live</span>
+      </div>
+    </header>
+
+    <div class="time-filter" id="time-filter">
+      <button data-since="1h">1H</button>
+      <button data-since="24h">24H</button>
+      <button data-since="7d">7D</button>
+      <button data-since="30d">30D</button>
+      <button data-since="all" class="active">All</button>
+    </div>
+
+    <div class="summary-cards" id="summary-cards">
+      <div class="card">
+        <div class="card-label">Total Tokens</div>
+        <div class="card-value" id="total-tokens">0</div>
+        <div class="card-sub" id="token-breakdown">0 in / 0 out</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Requests</div>
+        <div class="card-value blue" id="total-requests">0</div>
+        <div class="card-sub" id="avg-latency">0ms avg latency</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Avg Tokens/sec</div>
+        <div class="card-value purple" id="avg-tps">0</div>
+        <div class="card-sub">generation speed</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Local Cost</div>
+        <div class="card-value" id="local-cost">$0.00</div>
+        <div class="card-sub">$0.02/M in, $0.10/M out</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Cloud Equivalent</div>
+        <div class="card-value orange" id="cloud-cost">$0.00</div>
+        <div class="card-sub" id="cloud-model-label">vs GPT-4o</div>
+      </div>
+      <div class="card">
+        <div class="card-label">You Saved</div>
+        <div class="card-value green" id="savings">$0.00</div>
+        <div class="card-sub" id="savings-pct">0% savings</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Token Usage Over Time</h3>
+        <div class="chart-container">
+          <canvas id="usage-chart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Usage by Model</h3>
+        <div class="chart-container">
+          <canvas id="model-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- vLLM Engine Metrics -->
+    <div class="vllm-metrics" id="vllm-section">
+      <div class="vllm-header">
+        <h3>vLLM Engine Metrics</h3>
+        <span class="vllm-model" id="vllm-model-name">—</span>
+      </div>
+      <div class="vllm-grid">
+        <div class="vllm-card">
+          <div class="vllm-card-label">Engine State</div>
+          <div class="vllm-card-value" id="vllm-engine-state">—</div>
+          <div class="vllm-card-sub" id="vllm-queue">0 running / 0 waiting</div>
+        </div>
+        <div class="vllm-card">
+          <div class="vllm-card-label">KV Cache Usage</div>
+          <div class="vllm-card-value" id="vllm-kv-cache">0%</div>
+          <div class="vllm-bar"><div class="vllm-bar-fill" id="vllm-kv-bar" style="width:0%"></div></div>
+        </div>
+        <div class="vllm-card">
+          <div class="vllm-card-label">Prefix Cache Hit Rate</div>
+          <div class="vllm-card-value green" id="vllm-cache-hit">0%</div>
+          <div class="vllm-card-sub" id="vllm-cache-detail">0 / 0 tokens</div>
+        </div>
+        <div class="vllm-card">
+          <div class="vllm-card-label">Avg Time to First Token</div>
+          <div class="vllm-card-value" id="vllm-ttft">—</div>
+          <div class="vllm-card-sub" id="vllm-itl">inter-token: —</div>
+        </div>
+        <div class="vllm-card">
+          <div class="vllm-card-label">Avg E2E Latency</div>
+          <div class="vllm-card-value" id="vllm-e2e">—</div>
+          <div class="vllm-card-sub" id="vllm-phases">prefill: — / decode: —</div>
+        </div>
+        <div class="vllm-card">
+          <div class="vllm-card-label">vLLM Totals</div>
+          <div class="vllm-card-value" id="vllm-total-reqs">0</div>
+          <div class="vllm-card-sub" id="vllm-total-tokens">0 prompt / 0 gen tokens</div>
+        </div>
+        <div class="vllm-card">
+          <div class="vllm-card-label">Prompt Token Sources</div>
+          <div class="vllm-card-value" id="vllm-prompt-cached">0%</div>
+          <div class="vllm-card-sub" id="vllm-prompt-breakdown">cached vs computed</div>
+        </div>
+        <div class="vllm-card">
+          <div class="vllm-card-label">Process Memory</div>
+          <div class="vllm-card-value" id="vllm-memory">—</div>
+          <div class="vllm-card-sub" id="vllm-cpu">CPU: — seconds</div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-top:16px">
+        <h3>KV Cache & Queue (last 10 min)</h3>
+        <div class="chart-container">
+          <canvas id="vllm-history-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cost Comparison with model selector -->
+    <div class="cost-comparison" id="cost-section">
+      <div class="cost-header">
+        <h3>Cost Comparison: Local vs Cloud</h3>
+        <div class="model-selector">
+          <label>Compare against:</label>
+          <div id="model-checkboxes" class="model-checkboxes"></div>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="cost-table">
+          <thead id="cost-table-head">
+            <tr>
+              <th>Local Model</th>
+              <th>Tokens</th>
+              <th>Local Cost</th>
+              <!-- Dynamic cloud model columns -->
+            </tr>
+          </thead>
+          <tbody id="cost-table-body"></tbody>
+          <tfoot id="cost-table-foot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Grouped Request Log -->
+    <div class="request-log">
+      <div class="log-header">
+        <h3>Request Log</h3>
+        <div class="log-controls">
+          <span>Group by:</span>
+          <button class="group-btn active" data-group="none">None</button>
+          <button class="group-btn" data-group="time">Time (30m)</button>
+          <button class="group-btn" data-group="session">Session</button>
+        </div>
+      </div>
+
+      <!-- Flat request view -->
+      <div id="flat-requests">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Model</th>
+                <th>In Tokens</th>
+                <th>Out Tokens</th>
+                <th>Latency</th>
+                <th>Tok/s</th>
+                <th>Local Cost</th>
+                <th>Cloud Cost</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody id="request-table-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span id="page-info">Showing 0 of 0</span>
+          <div>
+            <button id="prev-btn" disabled onclick="changePage(-1)">Prev</button>
+            <button id="next-btn" disabled onclick="changePage(1)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grouped request view -->
+      <div id="grouped-requests" style="display:none">
+        <div id="grouped-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
