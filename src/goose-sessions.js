@@ -139,6 +139,9 @@ function getLifetimeStats() {
         SUM(total_tokens) as total_tokens,
         SUM(input_tokens) as input_tokens,
         SUM(output_tokens) as output_tokens,
+        SUM(accumulated_total_tokens) as accumulated_total_tokens,
+        SUM(accumulated_input_tokens) as accumulated_input_tokens,
+        SUM(accumulated_output_tokens) as accumulated_output_tokens,
         MIN(created_at) as first_session,
         MAX(created_at) as last_session
       FROM sessions

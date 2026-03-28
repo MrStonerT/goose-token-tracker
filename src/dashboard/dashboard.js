@@ -957,9 +957,13 @@ async function updateLifetimeStats() {
       return n.toLocaleString();
     };
 
-    document.getElementById('lifetime-tokens').textContent = fmt(data.total_tokens) + ' tokens';
+    // Show accumulated tokens (what Goose reports) as headline
+    const accTotal = data.accumulated_total_tokens || data.total_tokens;
+    const accIn = data.accumulated_input_tokens || data.input_tokens;
+    const accOut = data.accumulated_output_tokens || data.output_tokens;
+    document.getElementById('lifetime-tokens').textContent = fmt(accTotal) + ' tokens';
     document.getElementById('lifetime-breakdown').textContent =
-      `${fmt(data.input_tokens)} in / ${fmt(data.output_tokens)} out`;
+      `${fmt(accIn)} in / ${fmt(accOut)} out`;
     document.getElementById('lifetime-sessions').textContent =
       `${data.total_sessions || 0} chats`;
     document.getElementById('lifetime-messages').textContent =
