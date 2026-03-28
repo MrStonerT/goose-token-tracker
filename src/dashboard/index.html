@@ -131,6 +131,62 @@
       </div>
     </div>
 
+    <!-- Chat Analytics -->
+    <div class="chat-analytics" id="chat-section">
+      <div class="chat-header">
+        <h3>Chat Analytics</h3>
+        <div class="chat-view-controls">
+          <button class="view-btn active" data-view="tiles" onclick="setChatView('tiles')">Tiles</button>
+          <button class="view-btn" data-view="bar" onclick="setChatView('bar')">Bar Chart</button>
+          <button class="view-btn" data-view="table" onclick="setChatView('table')">Table</button>
+        </div>
+      </div>
+
+      <!-- Tiles View -->
+      <div id="chat-tiles-view" class="chat-tiles"></div>
+
+      <!-- Bar Chart View -->
+      <div id="chat-bar-view" style="display:none">
+        <div class="chart-container" style="height:400px">
+          <canvas id="chat-bar-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Table View -->
+      <div id="chat-table-view" style="display:none">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Chat Name</th>
+                <th>Project</th>
+                <th>Requests</th>
+                <th>Input Tokens</th>
+                <th>Output Tokens</th>
+                <th>Total</th>
+                <th>Local Cost</th>
+                <th>Cloud Cost</th>
+                <th>Savings</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="chat-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Chat Detail Modal -->
+      <div id="chat-detail-modal" class="chat-modal" style="display:none">
+        <div class="chat-modal-content">
+          <div class="chat-modal-header">
+            <h3 id="chat-detail-name">Chat Details</h3>
+            <button onclick="closeChatDetail()" class="chat-modal-close">&times;</button>
+          </div>
+          <div id="chat-detail-body"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Cost Comparison with model selector -->
     <div class="cost-comparison" id="cost-section">
       <div class="cost-header">

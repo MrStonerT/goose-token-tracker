@@ -660,12 +660,291 @@ async function updateVllmHistoryChart() {
   } catch (e) { /* vLLM may be unreachable */ }
 }
 
+// --- Chat Analytics ---
+let chatBarChart = null;
+let currentChatView = 'tiles';
+let chatData = null;
+
+window.setChatView = function(view) {
+  currentChatView = view;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.view-btn[data-view="${view}"]`).classList.add('active');
+
+  document.getElementById('chat-tiles-view').style.display = view === 'tiles' ? 'grid' : 'none';
+  document.getElementById('chat-bar-view').style.display = view === 'bar' ? 'block' : 'none';
+  document.getElementById('chat-table-view').style.display = view === 'table' ? 'block' : 'none';
+
+  if (chatData) renderChatView(chatData);
+};
+
+async function updateChatAnalytics() {
+  chatData = await fetchJson('/api/chats');
+  renderChatView(chatData);
+}
+
+function projectName(dir) {
+  if (!dir) return '';
+  const parts = dir.replace(/\\/g, '/').split('/');
+  return parts[parts.length - 1] || '';
+}
+
+function renderChatView(data) {
+  const allChats = [...data.tracked, ...data.untracked];
+  if (currentChatView === 'tiles') renderChatTiles(allChats);
+  else if (currentChatView === 'bar') renderChatBarChart(data.tracked);
+  else if (currentChatView === 'table') renderChatTable(allChats);
+}
+
+function renderChatTiles(chats) {
+  const container = document.getElementById('chat-tiles-view');
+  if (chats.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:40px;grid-column:1/-1">No chats yet. Start using Goose through the tracker!</p>';
+    return;
+  }
+
+  // Find max tokens for relative bar sizing
+  const maxTokens = Math.max(...chats.map(c => c.total_tokens || 1));
+
+  container.innerHTML = chats.map(c => {
+    const total = c.total_tokens || 0;
+    const inPct = total > 0 ? (c.total_prompt_tokens / total * 100) : 50;
+    const outPct = total > 0 ? (c.total_completion_tokens / total * 100) : 50;
+    const barWidth = total > 0 ? (total / maxTokens * 100) : 0;
+    const savings = c.savings || 0;
+    const untrackedCls = c.goose_only ? ' untracked' : '';
+    const project = projectName(c.working_dir);
+
+    return `<div class="chat-tile${untrackedCls}" onclick="openChatDetail('${c.session_id}')">
+      <div class="chat-tile-name" title="${c.name}">${c.name}</div>
+      ${project ? `<div class="chat-tile-project" title="${c.working_dir}">${project}</div>` : '<div class="chat-tile-project">—</div>'}
+      <div class="chat-tile-stats">
+        <div class="chat-tile-stat">
+          <span class="chat-tile-stat-label">Input</span>
+          <span class="chat-tile-stat-value purple">${fmt(c.total_prompt_tokens)}</span>
+        </div>
+        <div class="chat-tile-stat">
+          <span class="chat-tile-stat-label">Output</span>
+          <span class="chat-tile-stat-value blue">${fmt(c.total_completion_tokens)}</span>
+        </div>
+        <div class="chat-tile-stat">
+          <span class="chat-tile-stat-label">Local Cost</span>
+          <span class="chat-tile-stat-value">${fmtCost(c.total_local_cost)}</span>
+        </div>
+        <div class="chat-tile-stat">
+          <span class="chat-tile-stat-label">Saved</span>
+          <span class="chat-tile-stat-value green">${fmtCost(Math.abs(savings))}</span>
+        </div>
+      </div>
+      <div class="chat-tile-bar" style="width:${barWidth}%">
+        <div class="chat-tile-bar-in" style="width:${inPct}%"></div>
+        <div class="chat-tile-bar-out" style="width:${outPct}%"></div>
+      </div>
+      <div class="chat-tile-date">${c.request_count} reqs &middot; ${fmtDateTime(c.created_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderChatBarChart(chats) {
+  if (chatBarChart) chatBarChart.destroy();
+  if (chats.length === 0) return;
+
+  // Show top 20 by total tokens
+  const sorted = [...chats].sort((a, b) => b.total_tokens - a.total_tokens).slice(0, 20);
+
+  chatBarChart = new Chart(document.getElementById('chat-bar-chart'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(c => c.name.length > 25 ? c.name.substring(0, 25) + '...' : c.name),
+      datasets: [
+        {
+          label: 'Input Tokens',
+          data: sorted.map(c => c.total_prompt_tokens),
+          backgroundColor: 'rgba(107, 99, 255, 0.7)',
+          borderRadius: 4
+        },
+        {
+          label: 'Output Tokens',
+          data: sorted.map(c => c.total_completion_tokens),
+          backgroundColor: 'rgba(34, 197, 94, 0.7)',
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { labels: { color: '#8b8fa3', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            afterBody: function(items) {
+              const idx = items[0].dataIndex;
+              const chat = sorted[idx];
+              return `Local: ${fmtCost(chat.total_local_cost)} | Saved: ${fmtCost(chat.savings)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { color: '#8b8fa3', font: { size: 10 } },
+          grid: { color: '#2a2e3e' }
+        },
+        y: {
+          stacked: true,
+          ticks: { color: '#8b8fa3', font: { size: 11 } },
+          grid: { color: '#2a2e3e' }
+        }
+      }
+    }
+  });
+}
+
+function renderChatTable(chats) {
+  const tbody = document.getElementById('chat-table-body');
+  if (chats.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-dim)">No chats</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = chats.map(c => {
+    const savings = c.savings || 0;
+    const cls = savings >= 0 ? 'savings-positive' : '';
+    const project = projectName(c.working_dir);
+    return `<tr style="cursor:pointer" onclick="openChatDetail('${c.session_id}')">
+      <td><strong>${c.name}</strong></td>
+      <td style="color:var(--accent);font-size:12px">${project}</td>
+      <td>${c.request_count}</td>
+      <td>${fmt(c.total_prompt_tokens)}</td>
+      <td>${fmt(c.total_completion_tokens)}</td>
+      <td>${fmt(c.total_tokens)}</td>
+      <td>${fmtCost(c.total_local_cost)}</td>
+      <td>${fmtCost(c.total_cloud_cost)}</td>
+      <td class="${cls}">${fmtCost(Math.abs(savings))}</td>
+      <td style="font-size:12px">${fmtDateTime(c.created_at)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Chat Detail Modal
+window.openChatDetail = async function(sessionId) {
+  const modal = document.getElementById('chat-detail-modal');
+  const body = document.getElementById('chat-detail-body');
+  const nameEl = document.getElementById('chat-detail-name');
+
+  modal.style.display = 'flex';
+  body.innerHTML = '<p style="color:var(--text-dim);padding:20px;text-align:center">Loading...</p>';
+
+  const data = await fetchJson(`/api/chats/${encodeURIComponent(sessionId)}`);
+
+  nameEl.textContent = data.name || sessionId;
+
+  const defaultCloud = data.cloud_costs[selectedCompareModels[0]] || data.cloud_costs['gpt-4o'] || 0;
+  const savings = defaultCloud - data.local_cost;
+  const project = projectName(data.working_dir);
+
+  let html = `
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">
+      ${project ? `<span style="color:var(--accent)">${project}</span> &middot; ` : ''}
+      ${data.provider || ''} &middot; ${data.goose_mode || ''} mode &middot;
+      ${data.message_count} messages &middot; Created ${fmtDateTime(data.created_at)}
+    </div>
+    <div class="chat-detail-grid">
+      <div class="chat-detail-card">
+        <div class="chat-detail-label">Requests</div>
+        <div class="chat-detail-value">${data.request_count}</div>
+      </div>
+      <div class="chat-detail-card">
+        <div class="chat-detail-label">Input Tokens</div>
+        <div class="chat-detail-value">${fmt(data.total_prompt_tokens)}</div>
+      </div>
+      <div class="chat-detail-card">
+        <div class="chat-detail-label">Output Tokens</div>
+        <div class="chat-detail-value">${fmt(data.total_completion_tokens)}</div>
+      </div>
+      <div class="chat-detail-card">
+        <div class="chat-detail-label">Total Tokens</div>
+        <div class="chat-detail-value">${fmt(data.total_tokens)}</div>
+      </div>
+      <div class="chat-detail-card">
+        <div class="chat-detail-label">Avg Latency</div>
+        <div class="chat-detail-value">${data.avg_latency_ms}ms</div>
+      </div>
+      <div class="chat-detail-card">
+        <div class="chat-detail-label">Avg Tok/s</div>
+        <div class="chat-detail-value">${data.avg_tokens_per_second}</div>
+      </div>
+      <div class="chat-detail-card">
+        <div class="chat-detail-label">Local Cost</div>
+        <div class="chat-detail-value">${fmtCost(data.local_cost)}</div>
+      </div>
+      <div class="chat-detail-card">
+        <div class="chat-detail-label">Saved</div>
+        <div class="chat-detail-value green">${fmtCost(Math.abs(savings))}</div>
+      </div>
+    </div>`;
+
+  // Cloud cost comparison for this chat
+  if (Object.keys(data.cloud_costs).length > 0) {
+    html += `<h4 style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px">If this chat ran on cloud</h4>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">`;
+    for (const model of selectedCompareModels) {
+      const cost = data.cloud_costs[model];
+      if (cost === undefined) continue;
+      const save = cost - data.local_cost;
+      html += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px">
+        <div style="color:var(--text-dim)">${model}</div>
+        <div style="color:var(--text-bright);font-weight:600">${fmtCost(cost)}</div>
+        <div style="color:var(--green);font-size:11px">save ${fmtCost(save)}</div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  // Request list for this chat
+  if (data.requests && data.requests.length > 0) {
+    html += `<h4 style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px">Requests (${data.requests.length})</h4>
+    <div class="table-scroll"><table style="font-size:12px">
+      <thead><tr><th>Time</th><th>In</th><th>Out</th><th>Latency</th><th>Tok/s</th><th>Local</th><th>Cloud</th></tr></thead>
+      <tbody>`;
+    for (const r of data.requests.slice(0, 50)) {
+      html += `<tr>
+        <td>${fmtTime(r.timestamp)}</td>
+        <td>${fmt(r.prompt_tokens)}</td>
+        <td>${fmt(r.completion_tokens)}</td>
+        <td>${r.latency_ms}ms</td>
+        <td>${Number(r.tokens_per_second).toFixed(1)}</td>
+        <td>${fmtCost(r.estimated_local_cost)}</td>
+        <td>${fmtCost(r.estimated_cloud_cost)}</td>
+      </tr>`;
+    }
+    if (data.requests.length > 50) {
+      html += `<tr><td colspan="7" style="text-align:center;color:var(--text-dim)">... and ${data.requests.length - 50} more</td></tr>`;
+    }
+    html += '</tbody></table></div>';
+  }
+
+  body.innerHTML = html;
+};
+
+window.closeChatDetail = function() {
+  document.getElementById('chat-detail-modal').style.display = 'none';
+};
+
+// Close modal on backdrop click
+document.getElementById('chat-detail-modal')?.addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeChatDetail();
+});
+
 // --- Main refresh ---
 async function refreshAll() {
   await Promise.all([
     updateStats(),
     updateUsageChart(),
     updateModelChart(),
+    updateChatAnalytics(),
     updateCostComparison(),
     updateVllmMetrics(),
     updateVllmHistoryChart(),
