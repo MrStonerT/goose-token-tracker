@@ -16,8 +16,23 @@
         <span id="uptime"></span>
         <span id="hw-info"></span>
         <span><span class="live-dot"></span> Live</span>
+        <button class="settings-btn" onclick="openSettings()" title="Settings">&#9881;</button>
       </div>
     </header>
+
+    <!-- Goose Lifetime Stats Banner -->
+    <div class="lifetime-banner" id="lifetime-banner" style="display:none">
+      <div class="lifetime-left">
+        <span class="lifetime-label">Goose Lifetime</span>
+        <span class="lifetime-value" id="lifetime-tokens">—</span>
+        <span class="lifetime-sub" id="lifetime-breakdown">loading...</span>
+      </div>
+      <div class="lifetime-right">
+        <span class="lifetime-stat" id="lifetime-sessions">— chats</span>
+        <span class="lifetime-stat" id="lifetime-messages">— messages</span>
+        <span class="lifetime-stat" id="lifetime-since">since —</span>
+      </div>
+    </div>
 
     <div class="time-filter" id="time-filter">
       <button data-since="1h">1H</button>
@@ -259,6 +274,63 @@
       </div>
     </div>
   </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="chat-modal" style="display:none">
+      <div class="chat-modal-content" style="max-width:600px">
+        <div class="chat-modal-header">
+          <h3>Settings</h3>
+          <button onclick="closeSettings()" class="chat-modal-close">&times;</button>
+        </div>
+        <div id="settings-body">
+          <div class="settings-group">
+            <label class="settings-label">vLLM Server URL</label>
+            <input type="text" id="setting-targetUrl" class="settings-input" placeholder="http://192.168.0.8:8000">
+            <span class="settings-help">The URL of your vLLM or OpenAI-compatible server</span>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">Goose Sessions Database</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="setting-gooseSessionsDb" class="settings-input" style="flex:1" placeholder="C:\Users\...\Block\goose\data\sessions\sessions.db">
+              <button onclick="detectGoose()" class="settings-detect-btn">Auto-Detect</button>
+            </div>
+            <span class="settings-help" id="goose-db-status">Path to Goose's sessions.db for chat names and lifetime stats</span>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">Hardware Name</label>
+            <input type="text" id="setting-hwName" class="settings-input" placeholder="Asus GX10">
+          </div>
+          <div class="settings-row">
+            <div class="settings-group" style="flex:1">
+              <label class="settings-label">GPU Watts</label>
+              <input type="number" id="setting-gpuWatts" class="settings-input" placeholder="125">
+            </div>
+            <div class="settings-group" style="flex:1">
+              <label class="settings-label">Electricity $/kWh</label>
+              <input type="number" id="setting-electricityCost" class="settings-input" step="0.01" placeholder="0.12">
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-group" style="flex:1">
+              <label class="settings-label">Local Cost: Input $/M tokens</label>
+              <input type="number" id="setting-localInput" class="settings-input" step="0.01" placeholder="0.02">
+            </div>
+            <div class="settings-group" style="flex:1">
+              <label class="settings-label">Local Cost: Output $/M tokens</label>
+              <input type="number" id="setting-localOutput" class="settings-input" step="0.01" placeholder="0.10">
+            </div>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">Default Cloud Comparison Model</label>
+            <select id="setting-defaultCompare" class="settings-input"></select>
+          </div>
+          <div class="settings-actions">
+            <button onclick="saveSettings()" class="settings-save-btn">Save Settings</button>
+            <span id="settings-status"></span>
+          </div>
+        </div>
+      </div>
+    </div>
 
   <script src="dashboard.js"></script>
 </body>

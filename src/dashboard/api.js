@@ -1,4 +1,6 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const database = require('../database');
 const tracker = require('../tracker');
 const vllmMetrics = require('../vllm-metrics');
@@ -6,7 +8,12 @@ const gooseSessions = require('../goose-sessions');
 const config = require('../../config.json');
 const http = require('http');
 
+const CONFIG_PATH = path.join(__dirname, '..', '..', 'config.json');
+
 const router = express.Router();
+
+// JSON body parsing for settings POST
+router.use(express.json());
 
 // GET /api/stats?since=1h|24h|7d|30d|all
 router.get('/stats', (req, res) => {
@@ -152,6 +159,103 @@ router.get('/config', (req, res) => {
     hardware: config.hardware,
     defaultCompareModel: config.defaultCompareModel,
     dashboardCompareModels: config.dashboardCompareModels
+  });
+});
+
+// GET /api/goose/lifetime — lifetime stats from Goose's sessions.db
+router.get('/goose/lifetime', (req, res) => {
+  const stats = gooseSessions.getLifetimeStats();
+  if (!stats) {
+    return res.json({
+      connected: false,
+      error: 'Goose sessions database not found. Configure the path in Settings.'
+    });
+  }
+  res.json({ connected: true, ...stats });
+});
+
+// GET /api/goose/status — check if Goose DB is connected
+router.get('/goose/status', (req, res) => {
+  res.json({
+    connected: gooseSessions.isConnected(),
+    path: config.gooseSessionsDb || null
+  });
+});
+
+// GET /api/settings — get current editable settings
+router.get('/settings', (req, res) => {
+  res.json({
+    proxyPort: config.proxyPort,
+    targetUrl: config.targetUrl,
+    gooseSessionsDb: config.gooseSessionsDb || '',
+    hardware: config.hardware || {},
+    localModelPricing: config.localModelPricing || {},
+    defaultCompareModel: config.defaultCompareModel || 'gpt-4o'
+  });
+});
+
+// POST /api/settings — update settings and write to config.json
+router.post('/settings', (req, res) => {
+  const updates = req.body;
+
+  // Only allow specific fields to be updated
+  const allowed = ['targetUrl', 'gooseSessionsDb', 'hardware', 'localModelPricing', 'defaultCompareModel'];
+  let changed = false;
+
+  for (const key of allowed) {
+    if (updates[key] !== undefined) {
+      config[key] = updates[key];
+      changed = true;
+    }
+  }
+
+  if (!changed) {
+    return res.status(400).json({ error: 'No valid settings provided' });
+  }
+
+  // Write updated config to disk
+  try {
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + '\n');
+
+    // If Goose DB path changed, reset the connection
+    if (updates.gooseSessionsDb !== undefined) {
+      gooseSessions.resetConnection();
+    }
+
+    res.json({ ok: true, message: 'Settings saved. Some changes may require a restart.' });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to save config: ' + e.message });
+  }
+});
+
+// POST /api/settings/detect-goose — auto-detect Goose installation
+router.post('/settings/detect-goose', (req, res) => {
+  const os = require('os');
+  const homedir = os.homedir();
+
+  // Common Goose sessions.db locations
+  const candidates = [
+    path.join(homedir, 'AppData', 'Roaming', 'Block', 'goose', 'data', 'sessions', 'sessions.db'),
+    path.join(homedir, 'AppData', 'Local', 'Block', 'goose', 'data', 'sessions', 'sessions.db'),
+    path.join(homedir, '.config', 'goose', 'data', 'sessions', 'sessions.db'),
+    path.join(homedir, '.local', 'share', 'goose', 'data', 'sessions', 'sessions.db'),
+    path.join(homedir, 'Library', 'Application Support', 'Block', 'goose', 'data', 'sessions', 'sessions.db'),
+  ];
+
+  const found = [];
+  for (const candidate of candidates) {
+    try {
+      if (fs.existsSync(candidate)) {
+        const stat = fs.statSync(candidate);
+        found.push({ path: candidate, size: stat.size, modified: stat.mtime });
+      }
+    } catch (e) {}
+  }
+
+  res.json({
+    found,
+    suggested: found.length > 0 ? found[0].path : null,
+    searched: candidates
   });
 });
 

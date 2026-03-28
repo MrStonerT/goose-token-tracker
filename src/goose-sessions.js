@@ -124,9 +124,88 @@ function getSessionNames(sessionIds) {
   }
 }
 
+/**
+ * Get lifetime stats from Goose's sessions.db.
+ */
+function getLifetimeStats() {
+  const db = getGooseDb();
+  if (!db) return null;
+
+  try {
+    const totals = db.prepare(`
+      SELECT
+        COUNT(*) as total_sessions,
+        SUM(CASE WHEN total_tokens IS NOT NULL THEN 1 ELSE 0 END) as sessions_with_data,
+        SUM(total_tokens) as total_tokens,
+        SUM(input_tokens) as input_tokens,
+        SUM(output_tokens) as output_tokens,
+        MIN(created_at) as first_session,
+        MAX(created_at) as last_session
+      FROM sessions
+    `).get();
+
+    const byProvider = db.prepare(`
+      SELECT
+        provider_name,
+        COUNT(*) as sessions,
+        SUM(total_tokens) as total_tokens,
+        SUM(input_tokens) as input_tokens,
+        SUM(output_tokens) as output_tokens
+      FROM sessions
+      WHERE total_tokens IS NOT NULL
+      GROUP BY provider_name
+      ORDER BY total_tokens DESC
+    `).all();
+
+    const byMonth = db.prepare(`
+      SELECT
+        strftime('%Y-%m', created_at) as month,
+        COUNT(*) as sessions,
+        SUM(total_tokens) as total_tokens,
+        SUM(output_tokens) as output_tokens
+      FROM sessions
+      WHERE total_tokens IS NOT NULL
+      GROUP BY month
+      ORDER BY month
+    `).all();
+
+    const totalMessages = db.prepare('SELECT COUNT(*) as n FROM messages').get();
+
+    return {
+      ...totals,
+      total_messages: totalMessages.n,
+      by_provider: byProvider,
+      by_month: byMonth
+    };
+  } catch (e) {
+    console.warn('[goose-sessions] Error getting lifetime stats:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Check if the Goose sessions DB is accessible.
+ */
+function isConnected() {
+  return getGooseDb() !== null;
+}
+
+/**
+ * Reset the DB connection (e.g. after config change).
+ */
+function resetConnection() {
+  if (gooseDb) {
+    try { gooseDb.close(); } catch (e) {}
+    gooseDb = null;
+  }
+}
+
 module.exports = {
   getAllSessions,
   getSession,
   getMessageCount,
-  getSessionNames
+  getSessionNames,
+  getLifetimeStats,
+  isConnected,
+  resetConnection
 };

@@ -938,6 +938,162 @@ document.getElementById('chat-detail-modal')?.addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeChatDetail();
 });
 
+// --- Goose Lifetime Stats ---
+async function updateLifetimeStats() {
+  try {
+    const res = await fetch('/api/goose/lifetime');
+    const data = await res.json();
+    const banner = document.getElementById('lifetime-banner');
+    if (!data.connected) {
+      banner.style.display = 'none';
+      return;
+    }
+    banner.style.display = 'flex';
+
+    const fmt = (n) => {
+      if (!n) return '0';
+      if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+      if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+      return n.toLocaleString();
+    };
+
+    document.getElementById('lifetime-tokens').textContent = fmt(data.total_tokens) + ' tokens';
+    document.getElementById('lifetime-breakdown').textContent =
+      `${fmt(data.input_tokens)} in / ${fmt(data.output_tokens)} out`;
+    document.getElementById('lifetime-sessions').textContent =
+      `${data.total_sessions || 0} chats`;
+    document.getElementById('lifetime-messages').textContent =
+      `${(data.total_messages || 0).toLocaleString()} messages`;
+
+    if (data.first_session) {
+      const d = new Date(data.first_session);
+      document.getElementById('lifetime-since').textContent =
+        `since ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+  } catch (e) {
+    console.warn('Lifetime stats error:', e);
+  }
+}
+
+// --- Settings Modal ---
+window.openSettings = async function() {
+  document.getElementById('settings-modal').style.display = 'flex';
+  await loadSettings();
+};
+
+window.closeSettings = function() {
+  document.getElementById('settings-modal').style.display = 'none';
+};
+
+// Close settings modal on backdrop click
+document.getElementById('settings-modal')?.addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeSettings();
+});
+
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    const s = await res.json();
+
+    document.getElementById('setting-targetUrl').value = s.targetUrl || '';
+    document.getElementById('setting-gooseSessionsDb').value = s.gooseSessionsDb || '';
+    document.getElementById('setting-hwName').value = s.hardware?.name || '';
+    document.getElementById('setting-gpuWatts').value = s.hardware?.gpuWatts || '';
+    document.getElementById('setting-electricityCost').value = s.hardware?.electricityCostPerKwh || '';
+    document.getElementById('setting-localInput').value = s.localModelPricing?.default?.inputPerMillion || '';
+    document.getElementById('setting-localOutput').value = s.localModelPricing?.default?.outputPerMillion || '';
+
+    // Populate default compare model dropdown
+    const select = document.getElementById('setting-defaultCompare');
+    select.innerHTML = '';
+    if (allCloudModels.length > 0) {
+      for (const m of allCloudModels) {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name;
+        if (m.id === s.defaultCompareModel) opt.selected = true;
+        select.appendChild(opt);
+      }
+    } else {
+      const opt = document.createElement('option');
+      opt.value = s.defaultCompareModel;
+      opt.textContent = s.defaultCompareModel;
+      opt.selected = true;
+      select.appendChild(opt);
+    }
+
+    document.getElementById('settings-status').textContent = '';
+  } catch (e) {
+    document.getElementById('settings-status').textContent = 'Failed to load settings';
+  }
+}
+
+window.saveSettings = async function() {
+  const status = document.getElementById('settings-status');
+  status.textContent = 'Saving...';
+  status.style.color = '#aaa';
+
+  const payload = {
+    targetUrl: document.getElementById('setting-targetUrl').value.trim(),
+    gooseSessionsDb: document.getElementById('setting-gooseSessionsDb').value.trim(),
+    hardware: {
+      name: document.getElementById('setting-hwName').value.trim(),
+      gpuWatts: parseFloat(document.getElementById('setting-gpuWatts').value) || 125,
+      electricityCostPerKwh: parseFloat(document.getElementById('setting-electricityCost').value) || 0.12
+    },
+    localModelPricing: {
+      default: {
+        inputPerMillion: parseFloat(document.getElementById('setting-localInput').value) || 0.02,
+        outputPerMillion: parseFloat(document.getElementById('setting-localOutput').value) || 0.10
+      }
+    },
+    defaultCompareModel: document.getElementById('setting-defaultCompare').value
+  };
+
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      status.textContent = '✓ Settings saved!';
+      status.style.color = '#4ade80';
+      // Refresh lifetime stats in case Goose DB path changed
+      setTimeout(() => updateLifetimeStats(), 500);
+    } else {
+      status.textContent = data.error || 'Save failed';
+      status.style.color = '#f87171';
+    }
+  } catch (e) {
+    status.textContent = 'Network error saving settings';
+    status.style.color = '#f87171';
+  }
+};
+
+window.detectGoose = async function() {
+  const statusEl = document.getElementById('goose-db-status');
+  statusEl.textContent = 'Searching...';
+
+  try {
+    const res = await fetch('/api/settings/detect-goose', { method: 'POST' });
+    const data = await res.json();
+
+    if (data.suggested) {
+      document.getElementById('setting-gooseSessionsDb').value = data.suggested;
+      statusEl.textContent = `✓ Found! (${data.found.length} location${data.found.length > 1 ? 's' : ''})`;
+      statusEl.style.color = '#4ade80';
+    } else {
+      statusEl.textContent = `Not found. Searched ${data.searched.length} locations.`;
+      statusEl.style.color = '#f87171';
+    }
+  } catch (e) {
+    statusEl.textContent = 'Detection failed';
+    statusEl.style.color = '#f87171';
+  }
+};
+
 // --- Main refresh ---
 async function refreshAll() {
   await Promise.all([
@@ -957,6 +1113,7 @@ async function refreshAll() {
 async function init() {
   await initModelSelector();
   await refreshAll();
+  updateLifetimeStats(); // fetch once on load (not every refresh)
   connectLive();
 }
 
@@ -964,3 +1121,6 @@ init();
 
 // Poll every 10s as fallback
 setInterval(refreshAll, 10000);
+
+// Refresh lifetime stats every 60s (not as frequently as main stats)
+setInterval(updateLifetimeStats, 60000);

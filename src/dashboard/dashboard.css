@@ -741,6 +741,157 @@ tfoot td {
 
 .group-body table { font-size: 12px; }
 
+/* Lifetime Banner */
+.lifetime-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, var(--accent-dim) 0%, var(--bg-card) 100%);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+}
+
+.lifetime-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lifetime-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.lifetime-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.lifetime-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.lifetime-right {
+  display: flex;
+  gap: 20px;
+}
+
+.lifetime-stat {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* Settings Button */
+.settings-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: all 0.15s;
+}
+
+.settings-btn:hover { border-color: var(--accent); color: var(--text-bright); }
+
+/* Settings Form */
+.settings-group {
+  margin-bottom: 16px;
+}
+
+.settings-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.settings-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-bright);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+select.settings-input option {
+  background: var(--bg-card);
+  color: var(--text-bright);
+}
+
+.settings-help {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.settings-row {
+  display: flex;
+  gap: 12px;
+}
+
+.settings-detect-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.settings-detect-btn:hover { background: var(--accent); color: white; }
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.settings-save-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.settings-save-btn:hover { background: #5a52e0; }
+
+#settings-status {
+  font-size: 13px;
+  color: var(--green);
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .charts-grid { grid-template-columns: 1fr; }
