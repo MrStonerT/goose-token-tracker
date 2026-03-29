@@ -521,31 +521,83 @@ tr:hover td { background: var(--bg-card-hover); }
 .chat-tile.untracked:hover { opacity: 0.8; }
 
 /* Project View */
-.project-tile {
-  min-height: auto;
+.project-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
 }
 
-.project-chat-list {
-  margin-top: 8px;
-  border-top: 1px solid var(--border);
-  padding-top: 6px;
-}
+.project-card:hover { border-color: var(--accent-dim); }
 
-.project-chat-item {
+.project-card-header {
   display: flex;
   justify-content: space-between;
-  padding: 3px 0;
-  font-size: 11px;
-  color: var(--text);
-  cursor: pointer;
-  border-radius: 3px;
-  padding: 3px 4px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.project-chat-item:hover {
-  background: var(--bg-card-hover);
-  color: var(--text-bright);
+.project-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
+
+.project-expand-icon {
+  font-size: 10px;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  width: 14px;
+}
+
+.project-card-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.project-card-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.project-stat {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.project-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-right: 4px;
+}
+
+.project-detail {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  cursor: default;
+}
+
+.project-detail-row {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.project-detail-row:hover {
+  background: var(--bg-card-hover);
+}
+
+/* Legacy project styles (kept for reference) */
+.project-tile { min-height: auto; }
+.project-chat-list { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 6px; }
+.project-chat-item { display: flex; justify-content: space-between; padding: 3px 4px; font-size: 11px; color: var(--text); cursor: pointer; border-radius: 3px; }
+.project-chat-item:hover { background: var(--bg-card-hover); color: var(--text-bright); }
 
 /* Chat Detail Modal */
 .chat-modal {
@@ -678,6 +730,12 @@ tr:hover td { background: var(--bg-card-hover); }
 }
 
 .model-checkboxes input { display: none; }
+
+/* Cost breakdown sub-text in cost comparison table */
+.cost-total { display: block; font-weight: 500; }
+.cost-breakdown { display: block; font-size: 10px; color: var(--text-dim); opacity: 0.7; }
+.cost-col-pricing { font-size: 10px; color: var(--text-dim); font-weight: 400; white-space: nowrap; }
+.cost-model-col { min-width: 100px; }
 
 tfoot td {
   font-weight: 600;
@@ -928,6 +986,38 @@ select.settings-input option {
 #settings-status {
   font-size: 13px;
   color: var(--green);
+}
+
+/* Hardware Cost Calculator */
+.settings-calculator {
+  background: var(--bg);
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 4px 0 12px;
+}
+
+.settings-calc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.settings-calc-body {
+  font-size: 13px;
+}
+
+.settings-calc-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  color: var(--text);
+}
+
+.settings-calc-row span:last-child {
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: var(--text-bright);
 }
 
 /* Responsive */

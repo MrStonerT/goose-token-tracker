@@ -220,9 +220,10 @@
           <thead id="cost-table-head">
             <tr>
               <th>Local Model</th>
-              <th>Tokens</th>
+              <th>Input Tokens</th>
+              <th>Output Tokens</th>
               <th>Local Cost</th>
-              <!-- Dynamic cloud model columns -->
+              <!-- Dynamic cloud model columns added by JS -->
             </tr>
           </thead>
           <tbody id="cost-table-body"></tbody>
@@ -306,6 +307,16 @@
           </div>
           <div class="settings-row">
             <div class="settings-group" style="flex:1">
+              <label class="settings-label">Purchase Price ($)</label>
+              <input type="number" id="setting-purchasePrice" class="settings-input" step="1" placeholder="2000">
+            </div>
+            <div class="settings-group" style="flex:1">
+              <label class="settings-label">Expected Lifespan (years)</label>
+              <input type="number" id="setting-lifespanYears" class="settings-input" step="0.5" placeholder="5">
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-group" style="flex:1">
               <label class="settings-label">GPU Watts</label>
               <input type="number" id="setting-gpuWatts" class="settings-input" placeholder="125">
             </div>
@@ -314,16 +325,52 @@
               <input type="number" id="setting-electricityCost" class="settings-input" step="0.01" placeholder="0.12">
             </div>
           </div>
+
+          <!-- Hardware Cost Calculator -->
+          <div id="hw-cost-calculator" class="settings-calculator" style="display:none">
+            <div class="settings-calc-header">
+              <span class="settings-label" style="margin:0">Calculated Local Cost</span>
+              <button type="button" onclick="applyCalculatedPricing()" class="settings-detect-btn">Apply to Pricing</button>
+            </div>
+            <div class="settings-calc-body">
+              <div class="settings-calc-row">
+                <span>Hourly depreciation</span>
+                <span id="calc-depreciation">—</span>
+              </div>
+              <div class="settings-calc-row">
+                <span>Hourly electricity</span>
+                <span id="calc-electricity">—</span>
+              </div>
+              <div class="settings-calc-row" style="font-weight:600;border-top:1px solid var(--border);padding-top:6px">
+                <span>Total cost/hour of GPU time</span>
+                <span id="calc-hourly-total">—</span>
+              </div>
+              <div class="settings-calc-row" style="margin-top:8px">
+                <span>Output cost/M tokens <span style="color:var(--text-dim);font-size:11px">(at <span id="calc-tps">40</span> tok/s)</span></span>
+                <span id="calc-output-cost">—</span>
+              </div>
+              <div class="settings-calc-row">
+                <span>Input cost/M tokens <span style="color:var(--text-dim);font-size:11px">(prefill ~10x faster)</span></span>
+                <span id="calc-input-cost">—</span>
+              </div>
+              <div class="settings-calc-row" style="margin-top:8px;border-top:1px solid var(--border);padding-top:6px">
+                <span>Breakeven vs <span id="calc-compare-model">gpt-5.2</span></span>
+                <span id="calc-breakeven">—</span>
+              </div>
+            </div>
+          </div>
+
           <div class="settings-row">
             <div class="settings-group" style="flex:1">
               <label class="settings-label">Local Cost: Input $/M tokens</label>
-              <input type="number" id="setting-localInput" class="settings-input" step="0.01" placeholder="0.02">
+              <input type="number" id="setting-localInput" class="settings-input" step="0.001" placeholder="0.02">
             </div>
             <div class="settings-group" style="flex:1">
               <label class="settings-label">Local Cost: Output $/M tokens</label>
-              <input type="number" id="setting-localOutput" class="settings-input" step="0.01" placeholder="0.10">
+              <input type="number" id="setting-localOutput" class="settings-input" step="0.001" placeholder="0.10">
             </div>
           </div>
+          <span class="settings-help">Set manually, or use the calculator above to derive from hardware costs</span>
           <div class="settings-group">
             <label class="settings-label">Default Cloud Comparison Model</label>
             <select id="setting-defaultCompare" class="settings-input"></select>

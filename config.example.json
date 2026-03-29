@@ -121,7 +121,7 @@
       "outputPerMillion": 0.60
     }
   },
-  "defaultCompareModel": "gpt-4o",
+  "defaultCompareModel": "gpt-5.2",
   "dashboardCompareModels": [
     "gpt-5",
     "gpt-4.1",

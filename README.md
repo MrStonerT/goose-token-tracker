@@ -4,6 +4,33 @@ A lightweight reverse-proxy that sits between [Goose](https://block.github.io/go
 
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green) ![License](https://img.shields.io/badge/license-MIT-blue)
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-overview.png" alt="Dashboard Overview — Lifetime stats, summary cards, token usage charts, and vLLM metrics" width="800">
+  <br><em>Dashboard overview with Goose lifetime stats, summary cards, usage charts, and live vLLM engine metrics</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/vllm-metrics.png" alt="vLLM Engine Metrics and Chat Analytics by Project" width="800">
+  <br><em>vLLM metrics detail and Chat Analytics grouped by project with per-chat breakdowns</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/cost-comparison.png" alt="Cost Comparison — Local vs cloud models with in/out breakdown and request log" width="800">
+  <br><em>Cost comparison with input/output breakdown, model selector, and paginated request log</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/chat-details.png" alt="Chat Detail Modal — Per-chat stats and cloud cost comparison" width="800">
+  <br><em>Chat detail modal with token counts, costs, and per-model cloud comparison</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/settings.png" alt="Settings — vLLM URL, Goose DB, hardware cost calculator" width="400">
+  <br><em>Settings with hardware cost calculator, breakeven analysis, and auto-detected Goose DB</em>
+</p>
+
 ## The Problem
 
 Running local LLMs is incredibly cost-effective — but you get **zero observability**. Goose tracks some session-level totals, but that's not enough for serious usage monitoring. Here's what's missing:
@@ -17,7 +44,7 @@ Running local LLMs is incredibly cost-effective — but you get **zero observabi
 | Tokens/second speed | No | Yes |
 | Streaming support | No tracking | Full SSE tap |
 | Local cost calculation | No | Per-token pricing |
-| Cloud cost comparison | No | 16 models |
+| Cloud cost comparison | No | 26 models |
 | vLLM engine metrics | No | KV cache, TTFT, queue, memory |
 | Chat name / session grouping | Yes (names only) | Yes (merged with Goose data) |
 | Request-level detail | No | Full log with pagination |
@@ -29,7 +56,7 @@ Running local LLMs is incredibly cost-effective — but you get **zero observabi
 ## What You Get
 
 - **Real-time token counting** for every request (input + output), read directly from vLLM's response (not estimated)
-- **Cost comparison** against 16 cloud models (GPT-4.1, Claude Opus 4, Gemini 2.5 Pro, DeepSeek R1, etc.)
+- **Cost comparison** against 26 cloud models (GPT-5.2, Claude Opus 4.6, Gemini 3.1 Pro, Grok 4, DeepSeek R1, etc.)
 - **Live vLLM engine metrics** (KV cache, prefix cache hit rate, TTFT, queue depth, memory)
 - **Chat Analytics** — see token usage, cost, and savings per Goose chat session with actual chat names
 - **Goose Lifetime Stats** — total tokens across all sessions, as reported by Goose
@@ -188,32 +215,42 @@ The dashboard at `http://localhost:3000` provides:
 | `hardware.gpuWatts` | GPU power draw in watts | `125` |
 | `hardware.electricityCostPerKwh` | Your electricity rate | `0.12` |
 | `localModelPricing.default` | Flat per-token local cost | `$0.02/M in, $0.10/M out` |
-| `cloudComparisonModels` | Cloud models for cost comparison | 16 models included |
-| `defaultCompareModel` | Default model for savings calculation | `gpt-4o` |
+| `cloudComparisonModels` | Cloud models for cost comparison | 26 models included |
+| `defaultCompareModel` | Default model for savings calculation | `gpt-5.2` |
 | `dashboardCompareModels` | Models shown by default in cost table | 5 models |
 
 All settings can also be changed from the dashboard's Settings page.
 
-### Cloud Models Included
+### Cloud Models Included (26 models, March 2026 pricing)
 
 | Model | Input $/M | Output $/M |
 |-------|-----------|------------|
+| GPT-5.2 | $1.75 | $14.00 |
+| GPT-5 | $1.25 | $10.00 |
 | GPT-4.1 | $2.00 | $8.00 |
 | GPT-4.1 Mini | $0.40 | $1.60 |
 | GPT-4.1 Nano | $0.10 | $0.40 |
 | GPT-4o | $2.50 | $10.00 |
 | GPT-4o Mini | $0.15 | $0.60 |
-| o3 | $10.00 | $40.00 |
+| o3 | $2.00 | $8.00 |
 | o3 Mini | $1.10 | $4.40 |
 | o4 Mini | $1.10 | $4.40 |
+| Claude Opus 4.6 | $5.00 | $25.00 |
 | Claude Opus 4 | $15.00 | $75.00 |
+| Claude Sonnet 4.6 | $3.00 | $15.00 |
 | Claude Sonnet 4 | $3.00 | $15.00 |
+| Claude Haiku 4.5 | $1.00 | $5.00 |
 | Claude Haiku 3.5 | $0.80 | $4.00 |
+| Gemini 3.1 Pro | $2.00 | $12.00 |
+| Gemini 3 Flash | $0.50 | $3.00 |
 | Gemini 2.5 Pro | $1.25 | $10.00 |
-| Gemini 2.5 Flash | $0.15 | $0.60 |
-| Gemini 2.0 Flash | $0.10 | $0.40 |
-| DeepSeek V3 | $0.27 | $1.10 |
+| Gemini 2.5 Flash | $0.30 | $2.50 |
+| Grok 4 | $3.00 | $15.00 |
+| Grok 4.1 Fast | $0.20 | $0.50 |
+| DeepSeek V3 | $0.28 | $0.42 |
 | DeepSeek R1 | $0.55 | $2.19 |
+| Mistral Large 3 | $0.50 | $1.50 |
+| Llama 4 Maverick | $0.15 | $0.60 |
 
 ## Windows Auto-Start
 

@@ -19,9 +19,21 @@ router.use(express.json());
 router.get('/stats', (req, res) => {
   const since = req.query.since || 'all';
   const stats = database.getStats(since);
+
+  // Recompute cloud cost dynamically using current default model
+  // (the DB stores cloud cost from whatever model was default at request time)
+  const liveCloudCost = tracker.computeCloudCost(
+    stats.total_prompt_tokens, stats.total_completion_tokens
+  );
+  const liveLocalCost = tracker.computeLocalCost(
+    stats.total_prompt_tokens, stats.total_completion_tokens
+  );
+
   res.json({
     ...stats,
-    savings: stats.total_cloud_cost - stats.total_local_cost,
+    total_local_cost: liveLocalCost,
+    total_cloud_cost: liveCloudCost,
+    savings: liveCloudCost - liveLocalCost,
     period: since
   });
 });
@@ -86,10 +98,12 @@ router.get('/cost-comparison', (req, res) => {
 
 // GET /api/cloud-models — list all available cloud models for the selector
 router.get('/cloud-models', (req, res) => {
+  // Re-read config to get live values after settings changes
+  const liveConfig = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'config.json'), 'utf8'));
   res.json({
     models: tracker.getCloudModelList(),
-    defaultCompare: config.defaultCompareModel || 'gpt-4o',
-    dashboardDefaults: tracker.getDashboardCompareModels()
+    defaultCompare: liveConfig.defaultCompareModel || config.defaultCompareModel || 'gpt-4o',
+    dashboardDefaults: liveConfig.dashboardCompareModels || tracker.getDashboardCompareModels()
   });
 });
 
@@ -190,7 +204,7 @@ router.get('/settings', (req, res) => {
     gooseSessionsDb: config.gooseSessionsDb || '',
     hardware: config.hardware || {},
     localModelPricing: config.localModelPricing || {},
-    defaultCompareModel: config.defaultCompareModel || 'gpt-4o'
+    defaultCompareModel: config.defaultCompareModel || 'gpt-5.2'
   });
 });
 
@@ -374,13 +388,20 @@ router.get('/chats/:sessionId', (req, res) => {
     SELECT * FROM requests WHERE session_id = ? ORDER BY timestamp ASC
   `).all(sessionId);
 
-  // Compute totals
+  // Compute totals from proxy-tracked requests
   let totalPrompt = 0, totalCompletion = 0, totalLatency = 0, totalTps = 0;
   for (const r of requests) {
     totalPrompt += r.prompt_tokens;
     totalCompletion += r.completion_tokens;
     totalLatency += r.latency_ms;
     totalTps += r.tokens_per_second;
+  }
+
+  // If no proxy-tracked requests, fall back to Goose's session token data
+  const gooseOnly = requests.length === 0 && goose;
+  if (gooseOnly) {
+    totalPrompt = goose.input_tokens || 0;
+    totalCompletion = goose.output_tokens || 0;
   }
 
   const avgLatency = requests.length > 0 ? totalLatency / requests.length : 0;
@@ -406,6 +427,7 @@ router.get('/chats/:sessionId', (req, res) => {
     local_cost: localCost,
     cloud_costs: allCloudCosts,
     savings: (allCloudCosts[config.defaultCompareModel] || 0) - localCost,
+    goose_only: !!gooseOnly,
     requests
   });
 });
