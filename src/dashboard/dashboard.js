@@ -9,6 +9,17 @@ let usageChart = null;
 let modelChart = null;
 let vllmHistoryChart = null;
 
+// --- Security: HTML escape helper ---
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // --- Formatting helpers ---
 function fmt(n, decimals = 0) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -273,7 +284,7 @@ async function updateCostComparison() {
     const cls = bestSaving >= 0 ? 'savings-positive' : 'savings-negative';
 
     return `<tr>
-      <td>${row.model}</td>
+      <td>${esc(row.model)}</td>
       <td>${fmt(row.total_tokens)}</td>
       <td>${fmtCost(row.total_local_cost)}</td>
       ${cloudCells}
@@ -320,7 +331,7 @@ async function updateRequestLog() {
       : '';
     return `<tr>
       <td>${fmtTime(r.timestamp)}</td>
-      <td>${r.model}</td>
+      <td>${esc(r.model)}</td>
       <td>${fmt(r.prompt_tokens)}</td>
       <td>${fmt(r.completion_tokens)}</td>
       <td>${r.latency_ms}ms</td>
@@ -352,7 +363,7 @@ async function updateGroupedRequests() {
 
   container.innerHTML = groups.map((g, i) => {
     const title = currentGroupBy === 'session'
-      ? (g.group_id === 'no-session' ? 'Ungrouped Requests' : `Session: ${g.group_id.substring(0, 20)}...`)
+      ? (g.group_id === 'no-session' ? 'Ungrouped Requests' : `Session: ${esc(g.group_id).substring(0, 20)}...`)
       : `${fmtDateTime(g.first_request)} — ${fmtTime(g.last_request)}`;
 
     const savings = g.total_cloud_cost - g.total_local_cost;
@@ -367,10 +378,10 @@ async function updateGroupedRequests() {
           <span>${Number(g.avg_tokens_per_second).toFixed(1)} tok/s</span>
           <span>Local: ${fmtCost(g.total_local_cost)}</span>
           <span class="${savingsClass}">Saved: ${fmtCost(Math.abs(savings))}</span>
-          <span>${g.models}</span>
+          <span>${esc(g.models)}</span>
         </div>
       </div>
-      <div class="group-body" id="group-body-${i}" data-group-id="${g.group_id}">
+      <div class="group-body" id="group-body-${i}" data-group-id="${esc(g.group_id)}">
         <p style="color:var(--text-dim);padding:8px 0;font-size:12px">Click to load details...</p>
       </div>
     </div>`;
@@ -408,7 +419,7 @@ window.toggleGroup = async function(index) {
         : '<span class="badge badge-sync">sync</span>';
       return `<tr>
         <td>${fmtTime(r.timestamp)}</td>
-        <td>${r.model}</td>
+        <td>${esc(r.model)}</td>
         <td>${fmt(r.prompt_tokens)}</td>
         <td>${fmt(r.completion_tokens)}</td>
         <td>${r.latency_ms}ms</td>
@@ -673,6 +684,7 @@ window.setChatView = function(view) {
   document.getElementById('chat-tiles-view').style.display = view === 'tiles' ? 'grid' : 'none';
   document.getElementById('chat-bar-view').style.display = view === 'bar' ? 'block' : 'none';
   document.getElementById('chat-table-view').style.display = view === 'table' ? 'block' : 'none';
+  document.getElementById('chat-projects-view').style.display = view === 'projects' ? 'grid' : 'none';
 
   if (chatData) renderChatView(chatData);
 };
@@ -691,8 +703,9 @@ function projectName(dir) {
 function renderChatView(data) {
   const allChats = [...data.tracked, ...data.untracked];
   if (currentChatView === 'tiles') renderChatTiles(allChats);
-  else if (currentChatView === 'bar') renderChatBarChart(data.tracked);
+  else if (currentChatView === 'bar') renderChatBarChart(allChats);
   else if (currentChatView === 'table') renderChatTable(allChats);
+  else if (currentChatView === 'projects') renderProjectView(allChats);
 }
 
 function renderChatTiles(chats) {
@@ -714,9 +727,9 @@ function renderChatTiles(chats) {
     const untrackedCls = c.goose_only ? ' untracked' : '';
     const project = projectName(c.working_dir);
 
-    return `<div class="chat-tile${untrackedCls}" onclick="openChatDetail('${c.session_id}')">
-      <div class="chat-tile-name" title="${c.name}">${c.name}</div>
-      ${project ? `<div class="chat-tile-project" title="${c.working_dir}">${project}</div>` : '<div class="chat-tile-project">—</div>'}
+    return `<div class="chat-tile${untrackedCls}" onclick="openChatDetail('${esc(c.session_id)}')">
+      <div class="chat-tile-name" title="${esc(c.name)}">${esc(c.name)}</div>
+      ${project ? `<div class="chat-tile-project" title="${esc(c.working_dir)}">${project}</div>` : '<div class="chat-tile-project">—</div>'}
       <div class="chat-tile-stats">
         <div class="chat-tile-stat">
           <span class="chat-tile-stat-label">Input</span>
@@ -802,6 +815,89 @@ function renderChatBarChart(chats) {
   });
 }
 
+function renderProjectView(chats) {
+  const container = document.getElementById('chat-projects-view');
+
+  // Group chats by project (working_dir)
+  const projects = {};
+  for (const c of chats) {
+    const proj = projectName(c.working_dir) || '(No Project)';
+    if (!projects[proj]) {
+      projects[proj] = {
+        name: proj,
+        working_dir: c.working_dir || '',
+        chats: [],
+        total_prompt_tokens: 0,
+        total_completion_tokens: 0,
+        total_tokens: 0,
+        total_local_cost: 0,
+        total_cloud_cost: 0,
+        savings: 0,
+        request_count: 0
+      };
+    }
+    const p = projects[proj];
+    p.chats.push(c);
+    p.total_prompt_tokens += c.total_prompt_tokens || 0;
+    p.total_completion_tokens += c.total_completion_tokens || 0;
+    p.total_tokens += c.total_tokens || 0;
+    p.total_local_cost += c.total_local_cost || 0;
+    p.total_cloud_cost += c.total_cloud_cost || 0;
+    p.savings += c.savings || 0;
+    p.request_count += c.request_count || 0;
+  }
+
+  const sorted = Object.values(projects).sort((a, b) => b.total_tokens - a.total_tokens);
+  const maxTokens = Math.max(...sorted.map(p => p.total_tokens || 1));
+
+  if (sorted.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:40px;grid-column:1/-1">No projects found</p>';
+    return;
+  }
+
+  container.innerHTML = sorted.map(p => {
+    const barWidth = p.total_tokens > 0 ? (p.total_tokens / maxTokens * 100) : 0;
+    const inPct = p.total_tokens > 0 ? (p.total_prompt_tokens / p.total_tokens * 100) : 50;
+    const outPct = p.total_tokens > 0 ? (p.total_completion_tokens / p.total_tokens * 100) : 50;
+
+    const chatList = p.chats.slice(0, 5).map(c =>
+      `<div class="project-chat-item" onclick="event.stopPropagation(); openChatDetail('${c.session_id}')">
+        <span>${esc(c.name)}</span>
+        <span style="color:var(--text-dim)">${fmt(c.total_tokens)}</span>
+      </div>`
+    ).join('');
+    const moreCount = p.chats.length > 5 ? `<div style="color:var(--text-dim);font-size:11px;padding:2px 0">... +${p.chats.length - 5} more</div>` : '';
+
+    return `<div class="chat-tile project-tile">
+      <div class="chat-tile-name" title="${p.working_dir}">${p.name}</div>
+      <div class="chat-tile-project">${p.chats.length} chat${p.chats.length !== 1 ? 's' : ''} &middot; ${p.request_count} requests</div>
+      <div class="chat-tile-stats">
+        <div class="chat-tile-stat">
+          <span class="chat-tile-stat-label">Input</span>
+          <span class="chat-tile-stat-value purple">${fmt(p.total_prompt_tokens)}</span>
+        </div>
+        <div class="chat-tile-stat">
+          <span class="chat-tile-stat-label">Output</span>
+          <span class="chat-tile-stat-value blue">${fmt(p.total_completion_tokens)}</span>
+        </div>
+        <div class="chat-tile-stat">
+          <span class="chat-tile-stat-label">Local Cost</span>
+          <span class="chat-tile-stat-value">${fmtCost(p.total_local_cost)}</span>
+        </div>
+        <div class="chat-tile-stat">
+          <span class="chat-tile-stat-label">Saved</span>
+          <span class="chat-tile-stat-value green">${fmtCost(Math.abs(p.savings))}</span>
+        </div>
+      </div>
+      <div class="chat-tile-bar" style="width:${barWidth}%">
+        <div class="chat-tile-bar-in" style="width:${inPct}%"></div>
+        <div class="chat-tile-bar-out" style="width:${outPct}%"></div>
+      </div>
+      <div class="project-chat-list">${chatList}${moreCount}</div>
+    </div>`;
+  }).join('');
+}
+
 function renderChatTable(chats) {
   const tbody = document.getElementById('chat-table-body');
   if (chats.length === 0) {
@@ -813,8 +909,8 @@ function renderChatTable(chats) {
     const savings = c.savings || 0;
     const cls = savings >= 0 ? 'savings-positive' : '';
     const project = projectName(c.working_dir);
-    return `<tr style="cursor:pointer" onclick="openChatDetail('${c.session_id}')">
-      <td><strong>${c.name}</strong></td>
+    return `<tr style="cursor:pointer" onclick="openChatDetail('${esc(c.session_id)}')">
+      <td><strong>${esc(c.name)}</strong></td>
       <td style="color:var(--accent);font-size:12px">${project}</td>
       <td>${c.request_count}</td>
       <td>${fmt(c.total_prompt_tokens)}</td>

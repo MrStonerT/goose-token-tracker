@@ -198,6 +198,26 @@ router.get('/settings', (req, res) => {
 router.post('/settings', (req, res) => {
   const updates = req.body;
 
+  // Validate targetUrl — must be a valid http/https URL
+  if (updates.targetUrl !== undefined) {
+    try {
+      const url = new URL(updates.targetUrl);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        return res.status(400).json({ error: 'targetUrl must use http or https' });
+      }
+    } catch (e) {
+      return res.status(400).json({ error: 'Invalid targetUrl format' });
+    }
+  }
+
+  // Validate gooseSessionsDb — must end in .db and not contain path traversal
+  if (updates.gooseSessionsDb !== undefined && updates.gooseSessionsDb !== '') {
+    const dbPath = updates.gooseSessionsDb;
+    if (dbPath.includes('..') || !dbPath.toLowerCase().endsWith('.db')) {
+      return res.status(400).json({ error: 'Invalid database path' });
+    }
+  }
+
   // Only allow specific fields to be updated
   const allowed = ['targetUrl', 'gooseSessionsDb', 'hardware', 'localModelPricing', 'defaultCompareModel'];
   let changed = false;
@@ -307,26 +327,32 @@ router.get('/chats', (req, res) => {
   const trackedIds = new Set(sessionIds);
   const untrackedGoose = allGooseSessions
     .filter(g => !trackedIds.has(g.id) && g.session_type === 'user')
-    .slice(0, 20)
-    .map(g => ({
-      session_id: g.id,
-      name: g.name || g.id,
-      working_dir: g.working_dir || null,
-      provider: g.provider_name || null,
-      goose_mode: g.goose_mode || null,
-      created_at: g.created_at,
-      request_count: 0,
-      total_prompt_tokens: g.input_tokens || 0,
-      total_completion_tokens: g.output_tokens || 0,
-      total_tokens: g.total_tokens || 0,
-      total_local_cost: 0,
-      total_cloud_cost: 0,
-      cloud_costs: {},
-      savings: 0,
-      first_request: g.created_at,
-      last_request: g.updated_at,
-      goose_only: true // flag: data from Goose, not from proxy tracking
-    }));
+    .map(g => {
+      const inTok = g.input_tokens || 0;
+      const outTok = g.output_tokens || 0;
+      const localCost = tracker.computeLocalCost(inTok, outTok);
+      const allCloudCosts = tracker.computeAllCloudCosts(inTok, outTok);
+      const defaultCloudCost = allCloudCosts[config.defaultCompareModel || 'gpt-4o'] || 0;
+      return {
+        session_id: g.id,
+        name: g.name || g.id,
+        working_dir: g.working_dir || null,
+        provider: g.provider_name || null,
+        goose_mode: g.goose_mode || null,
+        created_at: g.created_at,
+        request_count: 0,
+        total_prompt_tokens: inTok,
+        total_completion_tokens: outTok,
+        total_tokens: g.total_tokens || 0,
+        total_local_cost: localCost,
+        total_cloud_cost: defaultCloudCost,
+        cloud_costs: allCloudCosts,
+        savings: defaultCloudCost - localCost,
+        first_request: g.created_at,
+        last_request: g.updated_at,
+        goose_only: true // flag: data from Goose, not from proxy tracking
+      };
+    });
 
   res.json({
     tracked: chats,

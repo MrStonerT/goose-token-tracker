@@ -154,6 +154,7 @@
           <button class="view-btn active" data-view="tiles" onclick="setChatView('tiles')">Tiles</button>
           <button class="view-btn" data-view="bar" onclick="setChatView('bar')">Bar Chart</button>
           <button class="view-btn" data-view="table" onclick="setChatView('table')">Table</button>
+          <button class="view-btn" data-view="projects" onclick="setChatView('projects')">By Project</button>
         </div>
       </div>
 
@@ -166,6 +167,9 @@
           <canvas id="chat-bar-chart"></canvas>
         </div>
       </div>
+
+      <!-- Project View -->
+      <div id="chat-projects-view" class="chat-tiles" style="display:none"></div>
 
       <!-- Table View -->
       <div id="chat-table-view" style="display:none">

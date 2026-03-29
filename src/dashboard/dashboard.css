@@ -520,6 +520,33 @@ tr:hover td { background: var(--bg-card-hover); }
 
 .chat-tile.untracked:hover { opacity: 0.8; }
 
+/* Project View */
+.project-tile {
+  min-height: auto;
+}
+
+.project-chat-list {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+}
+
+.project-chat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 11px;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 3px 4px;
+}
+
+.project-chat-item:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-bright);
+}
+
 /* Chat Detail Modal */
 .chat-modal {
   position: fixed;

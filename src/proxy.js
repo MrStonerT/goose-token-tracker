@@ -22,10 +22,26 @@ function createProxyHandler() {
     const requestPath = req.url; // e.g. /v1/chat/completions or /v1/models
     const shouldTrack = TRACKED_PATHS.some(p => requestPath.startsWith(p));
 
-    // Collect request body
+    // Collect request body (limit to 10MB to prevent memory exhaustion)
+    const MAX_BODY_SIZE = 10 * 1024 * 1024;
     const bodyChunks = [];
-    req.on('data', chunk => bodyChunks.push(chunk));
+    let bodySize = 0;
+    let bodySizeLimitExceeded = false;
+    req.on('data', chunk => {
+      bodySize += chunk.length;
+      if (bodySize > MAX_BODY_SIZE) {
+        bodySizeLimitExceeded = true;
+        req.destroy();
+        return;
+      }
+      bodyChunks.push(chunk);
+    });
     req.on('end', () => {
+      if (bodySizeLimitExceeded) {
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request body too large' }));
+        return;
+      }
       let bodyBuffer = Buffer.concat(bodyChunks);
       let requestData = null;
       let isStreaming = false;
@@ -89,7 +105,7 @@ function createProxyHandler() {
         }
         res.end(JSON.stringify({
           error: {
-            message: `Failed to connect to LLM server at ${TARGET}: ${err.message}`,
+            message: `Failed to connect to LLM server: ${err.code || 'connection error'}`,
             type: 'proxy_error',
             code: err.code
           }

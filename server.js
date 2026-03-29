@@ -16,6 +16,16 @@ vllmMetrics.startPolling(5000);
 
 const app = express();
 
+// Security
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; font-src 'self'");
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
+
 // Dashboard static files
 app.use(express.static(path.join(__dirname, 'src', 'dashboard')));
 
@@ -32,7 +42,8 @@ app.get('*', (req, res) => {
 });
 
 // Start server
-const server = app.listen(config.proxyPort, () => {
+// Bind to localhost only — prevents LAN exposure
+const server = app.listen(config.proxyPort, '127.0.0.1', () => {
   console.log('');
   console.log('='.repeat(60));
   console.log('  Goose Token Tracker v2.0');
