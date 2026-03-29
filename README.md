@@ -77,7 +77,11 @@ npm install
 
 ### Configure
 
-Edit `config.json` or use the Settings page in the dashboard:
+On first run, `config.json` is auto-created from `config.example.json`. Edit it with your vLLM server address, or use the Settings page in the dashboard:
+
+```bash
+cp config.example.json config.json  # optional — auto-created on first run
+```
 
 ```json
 {
@@ -85,6 +89,8 @@ Edit `config.json` or use the Settings page in the dashboard:
   "targetUrl": "http://YOUR_VLLM_IP:8000"
 }
 ```
+
+> **Note:** `config.json` is gitignored to keep your personal settings (IP addresses, paths) out of version control.
 
 ### Run
 
@@ -175,7 +181,7 @@ The dashboard at `http://localhost:3000` provides:
 | Field | Description | Default |
 |-------|-------------|---------|
 | `proxyPort` | Port the tracker listens on | `3000` |
-| `targetUrl` | Your vLLM server URL | `http://192.168.0.8:8000` |
+| `targetUrl` | Your vLLM server URL | `http://localhost:8000` |
 | `dbPath` | SQLite database path | `./data/tracker.db` |
 | `gooseSessionsDb` | Path to Goose's sessions.db (optional) | |
 | `hardware.name` | Your GPU name (for dashboard display) | |

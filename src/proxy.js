@@ -2,7 +2,7 @@ const http = require('http');
 const tracker = require('./tracker');
 const config = require('../config.json');
 
-const TARGET = config.targetUrl; // e.g. http://192.168.0.8:8000
+const TARGET = config.targetUrl; // e.g. http://YOUR_VLLM_IP:8000
 
 // Paths we track tokens for
 const TRACKED_PATHS = ['/v1/chat/completions', '/v1/completions'];

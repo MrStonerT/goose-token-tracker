@@ -1,5 +1,15 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+
+// Auto-create config.json from example if it doesn't exist
+const configPath = path.join(__dirname, 'config.json');
+const examplePath = path.join(__dirname, 'config.example.json');
+if (!fs.existsSync(configPath) && fs.existsSync(examplePath)) {
+  fs.copyFileSync(examplePath, configPath);
+  console.log('[setup] Created config.json from config.example.json — edit it with your settings.');
+}
+
 const { initDatabase } = require('./src/database');
 const { createProxyHandler } = require('./src/proxy');
 const dashboardApi = require('./src/dashboard/api');

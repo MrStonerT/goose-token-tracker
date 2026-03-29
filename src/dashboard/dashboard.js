@@ -1110,7 +1110,7 @@ async function loadSettings() {
       for (const m of allCloudModels) {
         const opt = document.createElement('option');
         opt.value = m.id;
-        opt.textContent = m.name;
+        opt.textContent = m.id;
         if (m.id === s.defaultCompareModel) opt.selected = true;
         select.appendChild(opt);
       }

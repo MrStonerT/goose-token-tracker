@@ -1,0 +1,132 @@
+{
+  "proxyPort": 3000,
+  "targetUrl": "http://localhost:8000",
+  "sessionIdHeader": "x-session-id",
+  "dbPath": "./data/tracker.db",
+  "gooseSessionsDb": "",
+  "hardware": {
+    "name": "",
+    "gpuWatts": 125,
+    "electricityCostPerKwh": 0.12
+  },
+  "localModelPricing": {
+    "default": {
+      "inputPerMillion": 0.02,
+      "outputPerMillion": 0.1
+    }
+  },
+  "cloudComparisonModels": {
+    "gpt-5.2": {
+      "inputPerMillion": 1.75,
+      "outputPerMillion": 14.00
+    },
+    "gpt-5": {
+      "inputPerMillion": 1.25,
+      "outputPerMillion": 10.00
+    },
+    "gpt-4.1": {
+      "inputPerMillion": 2.00,
+      "outputPerMillion": 8.00
+    },
+    "gpt-4.1-mini": {
+      "inputPerMillion": 0.40,
+      "outputPerMillion": 1.60
+    },
+    "gpt-4.1-nano": {
+      "inputPerMillion": 0.10,
+      "outputPerMillion": 0.40
+    },
+    "gpt-4o": {
+      "inputPerMillion": 2.50,
+      "outputPerMillion": 10.00
+    },
+    "gpt-4o-mini": {
+      "inputPerMillion": 0.15,
+      "outputPerMillion": 0.60
+    },
+    "o3": {
+      "inputPerMillion": 2.00,
+      "outputPerMillion": 8.00
+    },
+    "o3-mini": {
+      "inputPerMillion": 1.10,
+      "outputPerMillion": 4.40
+    },
+    "o4-mini": {
+      "inputPerMillion": 1.10,
+      "outputPerMillion": 4.40
+    },
+    "claude-opus-4.6": {
+      "inputPerMillion": 5.00,
+      "outputPerMillion": 25.00
+    },
+    "claude-opus-4": {
+      "inputPerMillion": 15.00,
+      "outputPerMillion": 75.00
+    },
+    "claude-sonnet-4.6": {
+      "inputPerMillion": 3.00,
+      "outputPerMillion": 15.00
+    },
+    "claude-sonnet-4": {
+      "inputPerMillion": 3.00,
+      "outputPerMillion": 15.00
+    },
+    "claude-haiku-4.5": {
+      "inputPerMillion": 1.00,
+      "outputPerMillion": 5.00
+    },
+    "claude-haiku-3.5": {
+      "inputPerMillion": 0.80,
+      "outputPerMillion": 4.00
+    },
+    "gemini-3.1-pro": {
+      "inputPerMillion": 2.00,
+      "outputPerMillion": 12.00
+    },
+    "gemini-3-flash": {
+      "inputPerMillion": 0.50,
+      "outputPerMillion": 3.00
+    },
+    "gemini-2.5-pro": {
+      "inputPerMillion": 1.25,
+      "outputPerMillion": 10.00
+    },
+    "gemini-2.5-flash": {
+      "inputPerMillion": 0.30,
+      "outputPerMillion": 2.50
+    },
+    "grok-4": {
+      "inputPerMillion": 3.00,
+      "outputPerMillion": 15.00
+    },
+    "grok-4.1-fast": {
+      "inputPerMillion": 0.20,
+      "outputPerMillion": 0.50
+    },
+    "deepseek-v3": {
+      "inputPerMillion": 0.28,
+      "outputPerMillion": 0.42
+    },
+    "deepseek-r1": {
+      "inputPerMillion": 0.55,
+      "outputPerMillion": 2.19
+    },
+    "mistral-large-3": {
+      "inputPerMillion": 0.50,
+      "outputPerMillion": 1.50
+    },
+    "llama-4-maverick": {
+      "inputPerMillion": 0.15,
+      "outputPerMillion": 0.60
+    }
+  },
+  "defaultCompareModel": "gpt-4o",
+  "dashboardCompareModels": [
+    "gpt-5",
+    "gpt-4.1",
+    "claude-opus-4.6",
+    "claude-sonnet-4",
+    "gemini-2.5-pro"
+  ]
+}
