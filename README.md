@@ -23,12 +23,12 @@ A lightweight reverse-proxy that sits between [Goose](https://block.github.io/go
 
 <p align="center">
   <img src="docs/screenshots/chat-details.png" alt="Chat Detail Modal — Per-chat stats and cloud cost comparison" width="800">
-  <img src="docs/screenshots/chat-details2.png" alt="Chat Detail Modal — Per-chat stats and cloud cost comparison" width="800">
   <br><em>Chat detail modal with token counts, costs, and per-model cloud comparison</em>
 </p>
 
 <p align="center">
   <img src="docs/screenshots/settings.png" alt="Settings — vLLM URL, Goose DB, hardware cost calculator" width="400">
+  <img src="docs/screenshots/settings-withcostcalculator.png" alt="Settings —  hardware cost calculator" width="400">
   <br><em>Settings with hardware cost calculator, breakeven analysis, and auto-detected Goose DB</em>
 </p>
 
