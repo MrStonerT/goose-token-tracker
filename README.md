@@ -23,6 +23,7 @@ A lightweight reverse-proxy that sits between [Goose](https://block.github.io/go
 
 <p align="center">
   <img src="docs/screenshots/chat-details.png" alt="Chat Detail Modal — Per-chat stats and cloud cost comparison" width="800">
+  <img src="docs/screenshots/chat-details2.png" alt="Chat Detail Modal — Per-chat stats and cloud cost comparison" width="800">
   <br><em>Chat detail modal with token counts, costs, and per-model cloud comparison</em>
 </p>
 
