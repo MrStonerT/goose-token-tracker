@@ -113,7 +113,11 @@ async function updateStats() {
   document.getElementById('cloud-cost').textContent = fmtCost(stats.total_cloud_cost);
   document.getElementById('savings').textContent = fmtCost(stats.savings);
 
-  // Update the cloud model label to show which model we're comparing against
+  // Update pricing labels to reflect current config
+  const inPrice = stats.local_input_per_million;
+  const outPrice = stats.local_output_per_million;
+  document.getElementById('local-pricing-label').textContent =
+    `$${inPrice}/M in, $${outPrice}/M out`;
   document.getElementById('cloud-model-label').textContent = `vs ${currentDefaultModel}`;
 
   const pct = stats.total_cloud_cost > 0

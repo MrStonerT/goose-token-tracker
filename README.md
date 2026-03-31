@@ -45,7 +45,7 @@ Running local LLMs is incredibly cost-effective — but you get **zero observabi
 | Tokens/second speed | No | Yes |
 | Streaming support | No tracking | Full SSE tap |
 | Local cost calculation | No | Per-token pricing |
-| Cloud cost comparison | No | 26 models |
+| Cloud cost comparison | No | 29 models |
 | vLLM engine metrics | No | KV cache, TTFT, queue, memory |
 | Chat name / session grouping | Yes (names only) | Yes (merged with Goose data) |
 | Request-level detail | No | Full log with pagination |
@@ -216,13 +216,13 @@ The dashboard at `http://localhost:3000` provides:
 | `hardware.gpuWatts` | GPU power draw in watts | `125` |
 | `hardware.electricityCostPerKwh` | Your electricity rate | `0.12` |
 | `localModelPricing.default` | Flat per-token local cost | `$0.02/M in, $0.10/M out` |
-| `cloudComparisonModels` | Cloud models for cost comparison | 26 models included |
-| `defaultCompareModel` | Default model for savings calculation | `gpt-5.2` |
+| `cloudComparisonModels` | Cloud models for cost comparison | 29 models included |
+| `defaultCompareModel` | Default model for savings calculation | `claude-sonnet-4.6` |
 | `dashboardCompareModels` | Models shown by default in cost table | 5 models |
 
 All settings can also be changed from the dashboard's Settings page.
 
-### Cloud Models Included (26 models, March 2026 pricing)
+### Cloud Models Included (29 models, March 2026 pricing)
 
 | Model | Input $/M | Output $/M |
 |-------|-----------|------------|
@@ -237,8 +237,11 @@ All settings can also be changed from the dashboard's Settings page.
 | o3 Mini | $1.10 | $4.40 |
 | o4 Mini | $1.10 | $4.40 |
 | Claude Opus 4.6 | $5.00 | $25.00 |
+| Claude Opus 4.5 | $5.00 | $25.00 |
+| Claude Opus 4.1 | $15.00 | $75.00 |
 | Claude Opus 4 | $15.00 | $75.00 |
 | Claude Sonnet 4.6 | $3.00 | $15.00 |
+| Claude Sonnet 4.5 | $3.00 | $15.00 |
 | Claude Sonnet 4 | $3.00 | $15.00 |
 | Claude Haiku 4.5 | $1.00 | $5.00 |
 | Claude Haiku 3.5 | $0.80 | $4.00 |

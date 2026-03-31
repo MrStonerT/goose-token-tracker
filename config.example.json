@@ -60,11 +60,23 @@
       "inputPerMillion": 5.00,
       "outputPerMillion": 25.00
     },
+    "claude-opus-4.5": {
+      "inputPerMillion": 5.00,
+      "outputPerMillion": 25.00
+    },
+    "claude-opus-4.1": {
+      "inputPerMillion": 15.00,
+      "outputPerMillion": 75.00
+    },
     "claude-opus-4": {
       "inputPerMillion": 15.00,
       "outputPerMillion": 75.00
     },
     "claude-sonnet-4.6": {
+      "inputPerMillion": 3.00,
+      "outputPerMillion": 15.00
+    },
+    "claude-sonnet-4.5": {
       "inputPerMillion": 3.00,
       "outputPerMillion": 15.00
     },
@@ -121,7 +133,7 @@
       "outputPerMillion": 0.60
     }
   },
-  "defaultCompareModel": "gpt-5.2",
+  "defaultCompareModel": "claude-sonnet-4.6",
   "dashboardCompareModels": [
     "gpt-5",
     "gpt-4.1",

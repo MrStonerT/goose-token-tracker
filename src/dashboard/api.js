@@ -29,11 +29,16 @@ router.get('/stats', (req, res) => {
     stats.total_prompt_tokens, stats.total_completion_tokens
   );
 
+  // Include current local pricing for the dashboard label
+  const localPricing = config.localModelPricing?.default || { inputPerMillion: 0.02, outputPerMillion: 0.10 };
+
   res.json({
     ...stats,
     total_local_cost: liveLocalCost,
     total_cloud_cost: liveCloudCost,
     savings: liveCloudCost - liveLocalCost,
+    local_input_per_million: localPricing.inputPerMillion,
+    local_output_per_million: localPricing.outputPerMillion,
     period: since
   });
 });
