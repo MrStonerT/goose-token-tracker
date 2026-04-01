@@ -71,6 +71,42 @@ header h1 span { color: var(--accent); }
 .status-dot.error { background: var(--red); box-shadow: 0 0 6px var(--red); }
 .status-dot.unknown { background: var(--yellow); }
 
+/* Section Navigation */
+.section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  padding: 8px 0;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-nav-link {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.section-nav-link:hover {
+  border-color: var(--accent-dim);
+  color: var(--text);
+}
+
+.section-nav-link.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
 /* Time Filter */
 .time-filter {
   display: flex;

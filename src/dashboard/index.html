@@ -34,6 +34,15 @@
       </div>
     </div>
 
+    <!-- Section Navigation -->
+    <nav class="section-nav" id="section-nav">
+      <a class="section-nav-link active" href="#summary-cards" data-section="summary-cards">&#9676; Overview</a>
+      <a class="section-nav-link" href="#vllm-section" data-section="vllm-section">&#9881; vLLM</a>
+      <a class="section-nav-link" href="#chat-section" data-section="chat-section">&#128172; Chats</a>
+      <a class="section-nav-link" href="#cost-section" data-section="cost-section">&#128176; Cost</a>
+      <a class="section-nav-link" href="#log-section" data-section="log-section">&#128203; Log</a>
+    </nav>
+
     <div class="time-filter" id="time-filter">
       <button data-since="1h">1H</button>
       <button data-since="24h">24H</button>
@@ -233,7 +242,7 @@
     </div>
 
     <!-- Grouped Request Log -->
-    <div class="request-log">
+    <div class="request-log" id="log-section">
       <div class="log-header">
         <h3>Request Log</h3>
         <div class="log-controls">

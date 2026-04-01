@@ -152,7 +152,12 @@ const chartDefaults = {
 
 async function updateUsageChart() {
   const isShortRange = currentSince === '1h' || currentSince === '24h';
-  const endpoint = isShortRange ? '/api/trends/hourly' : '/api/trends/daily';
+  let endpoint;
+  if (currentSince === '1h') endpoint = '/api/trends/hourly?hours=1';
+  else if (currentSince === '24h') endpoint = '/api/trends/hourly?hours=24';
+  else if (currentSince === '7d') endpoint = '/api/trends/daily?days=7';
+  else if (currentSince === '30d') endpoint = '/api/trends/daily?days=30';
+  else endpoint = '/api/trends/daily?days=3650';
   const data = await fetchJson(endpoint);
 
   const labels = data.map(d => isShortRange ? fmtTime(d.hour || d.day) : fmtDate(d.day || d.hour));
@@ -509,6 +514,31 @@ window.changePage = function(delta) {
   currentPage = Math.max(0, currentPage + delta);
   updateRequestLog();
 };
+
+// --- Section nav scroll highlight ---
+(function() {
+  const sections = ['summary-cards', 'vllm-section', 'chat-section', 'cost-section', 'log-section'];
+  function updateActiveNavLink() {
+    let current = sections[0];
+    for (const id of sections) {
+      const el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top <= 80) current = id;
+    }
+    document.querySelectorAll('.section-nav-link').forEach(a => {
+      a.classList.toggle('active', a.dataset.section === current);
+    });
+  }
+  window.addEventListener('scroll', updateActiveNavLink, { passive: true });
+
+  // Smooth scroll on nav click
+  document.getElementById('section-nav').addEventListener('click', (e) => {
+    const link = e.target.closest('.section-nav-link');
+    if (!link) return;
+    e.preventDefault();
+    const target = document.getElementById(link.dataset.section);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+})();
 
 // --- Time filter ---
 document.getElementById('time-filter').addEventListener('click', (e) => {
