@@ -68,14 +68,14 @@ Running local LLMs is incredibly cost-effective — but you get **zero observabi
 ## Architecture
 
 ```
-Goose / Any Client          Token Tracker (port 3000)           vLLM (port 8000)
+Goose / Any Client          Token Tracker (port 4747)           vLLM (port 8000)
      |                            |                                  |
      |--- /v1/chat/completions -->|--- forwards request ----------->|
      |                            |    logs tokens, latency          |
      |<-- streamed response ------|<-- forwards response ------------|
      |                            |    computes costs, savings       |
      |                            |                                  |
-     |    http://localhost:3000   |                                  |
+     |    http://localhost:4747   |                                  |
      |--- Dashboard UI ---------->|    (serves static dashboard)     |
                                   |--- /metrics polling ------------>|
                                        (vLLM Prometheus metrics)
@@ -113,7 +113,7 @@ cp config.example.json config.json  # optional — auto-created on first run
 
 ```json
 {
-  "proxyPort": 3000,
+  "proxyPort": 4747,
   "targetUrl": "http://YOUR_VLLM_IP:8000"
 }
 ```
@@ -126,15 +126,15 @@ cp config.example.json config.json  # optional — auto-created on first run
 npm start
 ```
 
-Then open **http://localhost:3000** for the dashboard.
+Then open **http://localhost:4747** for the dashboard.
 
 ### Point Your Client at the Proxy
 
-Instead of pointing Goose (or any client) directly at your vLLM server, point it at `http://localhost:3000`. The tracker transparently proxies all `/v1/*` requests.
+Instead of pointing Goose (or any client) directly at your vLLM server, point it at `http://localhost:4747`. The tracker transparently proxies all `/v1/*` requests.
 
-**For Goose:** Change your provider's host URL from `http://YOUR_VLLM_IP:8000` to `http://localhost:3000` in Goose settings. No special environment variables needed — just change the URL.
+**For Goose:** Change your provider's host URL from `http://YOUR_VLLM_IP:8000` to `http://localhost:4747` in Goose settings. No special environment variables needed — just change the URL.
 
-**For other clients** (Open WebUI, Continue, LM Studio, etc.): Set the API base URL to `http://localhost:3000/v1`.
+**For other clients** (Open WebUI, Continue, LM Studio, etc.): Set the API base URL to `http://localhost:4747/v1`.
 
 ### Connect to Goose (Optional)
 
@@ -151,7 +151,7 @@ Common paths:
 
 ## Dashboard
 
-The dashboard at `http://localhost:3000` provides:
+The dashboard at `http://localhost:4747` provides:
 
 ### Goose Lifetime Banner
 - Total tokens across all Goose sessions (matches Goose's own total)
@@ -208,7 +208,7 @@ The dashboard at `http://localhost:3000` provides:
 
 | Field | Description | Default |
 |-------|-------------|---------|
-| `proxyPort` | Port the tracker listens on | `3000` |
+| `proxyPort` | Port the tracker listens on | `4747` |
 | `targetUrl` | Your vLLM server URL | `http://localhost:8000` |
 | `dbPath` | SQLite database path | `./data/tracker.db` |
 | `gooseSessionsDb` | Path to Goose's sessions.db (optional) | |

@@ -1,5 +1,5 @@
 {
-  "proxyPort": 3000,
+  "proxyPort": 4747,
   "targetUrl": "http://localhost:8000",
   "sessionIdHeader": "x-session-id",
   "dbPath": "./data/tracker.db",
