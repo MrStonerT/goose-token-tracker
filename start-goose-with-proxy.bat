@@ -4,13 +4,13 @@ echo   Starting Goose with Token Tracker
 echo ========================================
 echo.
 echo   NOTE: Make sure your Goose provider's
-echo   host URL is set to: http://localhost:3000
+echo   host URL is set to: http://localhost:4747
 echo   (instead of your vLLM server directly)
 echo.
 echo   The Token Tracker proxy forwards all /v1/* requests
 echo   to vLLM, tracking tokens along the way.
 echo.
-echo   Dashboard: http://localhost:3000/
+echo   Dashboard: http://localhost:4747/
 echo.
 
 REM Update this path to your Goose installation
