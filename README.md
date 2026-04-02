@@ -7,6 +7,11 @@ A lightweight reverse-proxy that sits between [Goose](https://block.github.io/go
 ## Screenshots
 
 <p align="center">
+  <img src="docs/screenshots/GooseTokenTrackerBigScreenshot.png" alt="Goose Token Tracker — Full dashboard view" width="900">
+  <br><em>Full dashboard: lifetime stats, section nav, summary cards, usage charts, vLLM engine metrics, and chat analytics</em>
+</p>
+
+<p align="center">
   <img src="docs/screenshots/dashboard-overview.png" alt="Dashboard Overview — Lifetime stats, summary cards, token usage charts, and vLLM metrics" width="800">
   <br><em>Dashboard overview with Goose lifetime stats, summary cards, usage charts, and live vLLM engine metrics</em>
 </p>
