@@ -12,18 +12,19 @@
     <header>
       <h1><span>Goose</span> Token Tracker</h1>
       <div class="status-bar">
-        <span id="vllm-status"><span class="status-dot unknown"></span> Checking vLLM...</span>
+        <span id="vllm-status"><span class="status-dot unknown"></span> <span data-i18n="status.checking">Checking vLLM...</span></span>
         <span id="uptime"></span>
         <span id="hw-info"></span>
-        <span><span class="live-dot"></span> Live</span>
-        <button class="settings-btn" onclick="openSettings()" title="Settings">&#9881;</button>
+        <span><span class="live-dot"></span> <span data-i18n="status.live">Live</span></span>
+        <button class="lang-btn" id="lang-btn" onclick="setLanguage(document.documentElement.lang === 'en' ? 'es' : 'en')" title="Switch language / Cambiar idioma">&#127760; EN</button>
+        <button class="settings-btn" onclick="openSettings()" data-i18n-title="settings.title" title="Settings">&#9881;</button>
       </div>
     </header>
 
     <!-- Goose Lifetime Stats Banner -->
     <div class="lifetime-banner" id="lifetime-banner" style="display:none">
       <div class="lifetime-left">
-        <span class="lifetime-label">Goose Lifetime (as reported by Goose)</span>
+        <span class="lifetime-label" data-i18n="lifetime.label">Goose Lifetime (as reported by Goose)</span>
         <span class="lifetime-value" id="lifetime-tokens">—</span>
         <span class="lifetime-sub" id="lifetime-breakdown">loading...</span>
       </div>
@@ -36,11 +37,11 @@
 
     <!-- Section Navigation -->
     <nav class="section-nav" id="section-nav">
-      <a class="section-nav-link active" href="#summary-cards" data-section="summary-cards">&#9676; Overview</a>
-      <a class="section-nav-link" href="#vllm-section" data-section="vllm-section">&#9881; vLLM</a>
-      <a class="section-nav-link" href="#chat-section" data-section="chat-section">&#128172; Chats</a>
-      <a class="section-nav-link" href="#cost-section" data-section="cost-section">&#128176; Cost</a>
-      <a class="section-nav-link" href="#log-section" data-section="log-section">&#128203; Log</a>
+      <a class="section-nav-link active" href="#summary-cards" data-section="summary-cards">&#9676; <span data-i18n="nav.overview">Overview</span></a>
+      <a class="section-nav-link" href="#vllm-section" data-section="vllm-section">&#9881; <span data-i18n="nav.vllm">vLLM</span></a>
+      <a class="section-nav-link" href="#chat-section" data-section="chat-section">&#128172; <span data-i18n="nav.chats">Chats</span></a>
+      <a class="section-nav-link" href="#cost-section" data-section="cost-section">&#128176; <span data-i18n="nav.cost">Cost</span></a>
+      <a class="section-nav-link" href="#log-section" data-section="log-section">&#128203; <span data-i18n="nav.log">Log</span></a>
     </nav>
 
     <div class="time-filter" id="time-filter">
@@ -53,32 +54,32 @@
 
     <div class="summary-cards" id="summary-cards">
       <div class="card">
-        <div class="card-label">Total Tokens</div>
+        <div class="card-label" data-i18n="card.totalTokens">Total Tokens</div>
         <div class="card-value" id="total-tokens">0</div>
         <div class="card-sub" id="token-breakdown">0 in / 0 out</div>
       </div>
       <div class="card">
-        <div class="card-label">Requests</div>
+        <div class="card-label" data-i18n="card.requests">Requests</div>
         <div class="card-value blue" id="total-requests">0</div>
         <div class="card-sub" id="avg-latency">0ms avg latency</div>
       </div>
       <div class="card">
-        <div class="card-label">Avg Tokens/sec</div>
+        <div class="card-label" data-i18n="card.avgTps">Avg Tokens/sec</div>
         <div class="card-value purple" id="avg-tps">0</div>
-        <div class="card-sub">generation speed</div>
+        <div class="card-sub" data-i18n="card.generationSpeed">generation speed</div>
       </div>
       <div class="card">
-        <div class="card-label">Local Cost</div>
+        <div class="card-label" data-i18n="card.localCost">Local Cost</div>
         <div class="card-value" id="local-cost">$0.00</div>
         <div class="card-sub" id="local-pricing-label">loading...</div>
       </div>
       <div class="card">
-        <div class="card-label">Cloud Equivalent</div>
+        <div class="card-label" data-i18n="card.cloudEquivalent">Cloud Equivalent</div>
         <div class="card-value orange" id="cloud-cost">$0.00</div>
         <div class="card-sub" id="cloud-model-label">vs GPT-4o</div>
       </div>
       <div class="card">
-        <div class="card-label">You Saved</div>
+        <div class="card-label" data-i18n="card.youSaved">You Saved</div>
         <div class="card-value green" id="savings">$0.00</div>
         <div class="card-sub" id="savings-pct">0% savings</div>
       </div>
@@ -86,13 +87,13 @@
 
     <div class="charts-grid">
       <div class="chart-card">
-        <h3>Token Usage Over Time</h3>
+        <h3 data-i18n="chart.tokenUsage">Token Usage Over Time</h3>
         <div class="chart-container">
           <canvas id="usage-chart"></canvas>
         </div>
       </div>
       <div class="chart-card">
-        <h3>Usage by Model</h3>
+        <h3 data-i18n="chart.byModel">Usage by Model</h3>
         <div class="chart-container">
           <canvas id="model-chart"></canvas>
         </div>
@@ -102,53 +103,53 @@
     <!-- vLLM Engine Metrics -->
     <div class="vllm-metrics" id="vllm-section">
       <div class="vllm-header">
-        <h3>vLLM Engine Metrics</h3>
+        <h3 data-i18n="vllm.title">vLLM Engine Metrics</h3>
         <span class="vllm-model" id="vllm-model-name">—</span>
       </div>
       <div class="vllm-grid">
         <div class="vllm-card">
-          <div class="vllm-card-label">Engine State</div>
+          <div class="vllm-card-label" data-i18n="vllm.engineState">Engine State</div>
           <div class="vllm-card-value" id="vllm-engine-state">—</div>
           <div class="vllm-card-sub" id="vllm-queue">0 running / 0 waiting</div>
         </div>
         <div class="vllm-card">
-          <div class="vllm-card-label">KV Cache Usage</div>
+          <div class="vllm-card-label" data-i18n="vllm.kvCache">KV Cache Usage</div>
           <div class="vllm-card-value" id="vllm-kv-cache">0%</div>
           <div class="vllm-bar"><div class="vllm-bar-fill" id="vllm-kv-bar" style="width:0%"></div></div>
         </div>
         <div class="vllm-card">
-          <div class="vllm-card-label">Prefix Cache Hit Rate</div>
+          <div class="vllm-card-label" data-i18n="vllm.prefixCacheHit">Prefix Cache Hit Rate</div>
           <div class="vllm-card-value green" id="vllm-cache-hit">0%</div>
           <div class="vllm-card-sub" id="vllm-cache-detail">0 / 0 tokens</div>
         </div>
         <div class="vllm-card">
-          <div class="vllm-card-label">Avg Time to First Token</div>
+          <div class="vllm-card-label" data-i18n="vllm.avgTtft">Avg Time to First Token</div>
           <div class="vllm-card-value" id="vllm-ttft">—</div>
           <div class="vllm-card-sub" id="vllm-itl">inter-token: —</div>
         </div>
         <div class="vllm-card">
-          <div class="vllm-card-label">Avg E2E Latency</div>
+          <div class="vllm-card-label" data-i18n="vllm.avgE2e">Avg E2E Latency</div>
           <div class="vllm-card-value" id="vllm-e2e">—</div>
           <div class="vllm-card-sub" id="vllm-phases">prefill: — / decode: —</div>
         </div>
         <div class="vllm-card">
-          <div class="vllm-card-label">vLLM Totals</div>
+          <div class="vllm-card-label" data-i18n="vllm.vllmTotals">vLLM Totals</div>
           <div class="vllm-card-value" id="vllm-total-reqs">0</div>
           <div class="vllm-card-sub" id="vllm-total-tokens">0 prompt / 0 gen tokens</div>
         </div>
         <div class="vllm-card">
-          <div class="vllm-card-label">Prompt Token Sources</div>
+          <div class="vllm-card-label" data-i18n="vllm.promptTokenSources">Prompt Token Sources</div>
           <div class="vllm-card-value" id="vllm-prompt-cached">0%</div>
           <div class="vllm-card-sub" id="vllm-prompt-breakdown">cached vs computed</div>
         </div>
         <div class="vllm-card">
-          <div class="vllm-card-label">Process Memory</div>
+          <div class="vllm-card-label" data-i18n="vllm.processMemory">Process Memory</div>
           <div class="vllm-card-value" id="vllm-memory">—</div>
           <div class="vllm-card-sub" id="vllm-cpu">CPU: — seconds</div>
         </div>
       </div>
       <div class="chart-card" style="margin-top:16px">
-        <h3>KV Cache & Queue (last 10 min)</h3>
+        <h3 data-i18n="vllm.kvHistory">KV Cache &amp; Queue (last 10 min)</h3>
         <div class="chart-container">
           <canvas id="vllm-history-chart"></canvas>
         </div>
@@ -158,12 +159,12 @@
     <!-- Chat Analytics -->
     <div class="chat-analytics" id="chat-section">
       <div class="chat-header">
-        <h3>Chat Analytics</h3>
+        <h3 data-i18n="chat.title">Chat Analytics</h3>
         <div class="chat-view-controls">
-          <button class="view-btn active" data-view="tiles" onclick="setChatView('tiles')">Tiles</button>
-          <button class="view-btn" data-view="bar" onclick="setChatView('bar')">Bar Chart</button>
-          <button class="view-btn" data-view="table" onclick="setChatView('table')">Table</button>
-          <button class="view-btn" data-view="projects" onclick="setChatView('projects')">By Project</button>
+          <button class="view-btn active" data-view="tiles" onclick="setChatView('tiles')" data-i18n="chat.viewTiles">Tiles</button>
+          <button class="view-btn" data-view="bar" onclick="setChatView('bar')" data-i18n="chat.viewBar">Bar Chart</button>
+          <button class="view-btn" data-view="table" onclick="setChatView('table')" data-i18n="chat.viewTable">Table</button>
+          <button class="view-btn" data-view="projects" onclick="setChatView('projects')" data-i18n="chat.viewProjects">By Project</button>
         </div>
       </div>
 
@@ -186,16 +187,16 @@
           <table>
             <thead>
               <tr>
-                <th>Chat Name</th>
-                <th>Project</th>
-                <th>Requests</th>
-                <th>Input Tokens</th>
-                <th>Output Tokens</th>
-                <th>Total</th>
-                <th>Local Cost</th>
-                <th>Cloud Cost</th>
-                <th>Savings</th>
-                <th>Date</th>
+                <th data-i18n="chat.colName">Chat Name</th>
+                <th data-i18n="chat.colProject">Project</th>
+                <th data-i18n="chat.colRequests">Requests</th>
+                <th data-i18n="chat.colInputTokens">Input Tokens</th>
+                <th data-i18n="chat.colOutputTokens">Output Tokens</th>
+                <th data-i18n="chat.colTotal">Total</th>
+                <th data-i18n="chat.colLocalCost">Local Cost</th>
+                <th data-i18n="chat.colCloudCost">Cloud Cost</th>
+                <th data-i18n="chat.colSavings">Savings</th>
+                <th data-i18n="chat.colDate">Date</th>
               </tr>
             </thead>
             <tbody id="chat-table-body"></tbody>
@@ -207,7 +208,7 @@
       <div id="chat-detail-modal" class="chat-modal" style="display:none">
         <div class="chat-modal-content">
           <div class="chat-modal-header">
-            <h3 id="chat-detail-name">Chat Details</h3>
+            <h3 id="chat-detail-name" data-i18n="chat.detailTitle">Chat Details</h3>
             <button onclick="closeChatDetail()" class="chat-modal-close">&times;</button>
           </div>
           <div id="chat-detail-body"></div>
@@ -218,9 +219,9 @@
     <!-- Cost Comparison with model selector -->
     <div class="cost-comparison" id="cost-section">
       <div class="cost-header">
-        <h3>Cost Comparison: Local vs Cloud</h3>
+        <h3 data-i18n="cost.title">Cost Comparison: Local vs Cloud</h3>
         <div class="model-selector">
-          <label>Compare against:</label>
+          <label data-i18n="cost.compareAgainst">Compare against:</label>
           <div id="model-checkboxes" class="model-checkboxes"></div>
         </div>
       </div>
@@ -228,10 +229,10 @@
         <table id="cost-table">
           <thead id="cost-table-head">
             <tr>
-              <th>Local Model</th>
-              <th>Input Tokens</th>
-              <th>Output Tokens</th>
-              <th>Local Cost</th>
+              <th data-i18n="cost.colLocalModel">Local Model</th>
+              <th data-i18n="cost.colInputTokens">Input Tokens</th>
+              <th data-i18n="cost.colOutputTokens">Output Tokens</th>
+              <th data-i18n="cost.colLocalCost">Local Cost</th>
               <!-- Dynamic cloud model columns added by JS -->
             </tr>
           </thead>
@@ -244,12 +245,12 @@
     <!-- Grouped Request Log -->
     <div class="request-log" id="log-section">
       <div class="log-header">
-        <h3>Request Log</h3>
+        <h3 data-i18n="log.title">Request Log</h3>
         <div class="log-controls">
-          <span>Group by:</span>
-          <button class="group-btn active" data-group="none">None</button>
-          <button class="group-btn" data-group="time">Time (30m)</button>
-          <button class="group-btn" data-group="session">Session</button>
+          <span data-i18n="log.groupBy">Group by:</span>
+          <button class="group-btn active" data-group="none" data-i18n="log.groupNone">None</button>
+          <button class="group-btn" data-group="time" data-i18n="log.groupTime">Time (30m)</button>
+          <button class="group-btn" data-group="session" data-i18n="log.groupSession">Session</button>
         </div>
       </div>
 
@@ -259,15 +260,15 @@
           <table>
             <thead>
               <tr>
-                <th>Time</th>
-                <th>Model</th>
-                <th>In Tokens</th>
-                <th>Out Tokens</th>
-                <th>Latency</th>
-                <th>Tok/s</th>
-                <th>Local Cost</th>
-                <th>Cloud Cost</th>
-                <th>Type</th>
+                <th data-i18n="log.colTime">Time</th>
+                <th data-i18n="log.colModel">Model</th>
+                <th data-i18n="log.colInTokens">In Tokens</th>
+                <th data-i18n="log.colOutTokens">Out Tokens</th>
+                <th data-i18n="log.colLatency">Latency</th>
+                <th data-i18n="log.colTps">Tok/s</th>
+                <th data-i18n="log.colLocalCost">Local Cost</th>
+                <th data-i18n="log.colCloudCost">Cloud Cost</th>
+                <th data-i18n="log.colType">Type</th>
               </tr>
             </thead>
             <tbody id="request-table-body"></tbody>
@@ -293,44 +294,52 @@
     <div id="settings-modal" class="chat-modal" style="display:none">
       <div class="chat-modal-content" style="max-width:600px">
         <div class="chat-modal-header">
-          <h3>Settings</h3>
+          <h3 data-i18n="settings.title">Settings</h3>
           <button onclick="closeSettings()" class="chat-modal-close">&times;</button>
         </div>
         <div id="settings-body">
           <div class="settings-group">
-            <label class="settings-label">vLLM Server URL</label>
-            <input type="text" id="setting-targetUrl" class="settings-input" placeholder="http://YOUR_VLLM_IP:8000">
-            <span class="settings-help">The URL of your vLLM or OpenAI-compatible server</span>
+            <label class="settings-label" data-i18n="settings.vllmUrl">vLLM Server URL</label>
+            <input type="text" id="setting-targetUrl" class="settings-input"
+              data-i18n-placeholder="settings.vllmUrl" placeholder="http://YOUR_VLLM_IP:8000">
+            <span class="settings-help" data-i18n="settings.vllmUrlHelp">The URL of your vLLM or OpenAI-compatible server</span>
           </div>
           <div class="settings-group">
-            <label class="settings-label">Goose Sessions Database</label>
+            <label class="settings-label" for="setting-injectStreamOptions">
+              <input type="checkbox" id="setting-injectStreamOptions" style="margin-right:8px;vertical-align:middle">
+              <span data-i18n-html="settings.injectStream">Inject <code>stream_options.include_usage</code> on streaming requests</span>
+            </label>
+            <span class="settings-help" data-i18n-html="settings.injectStreamHelp">When enabled, the proxy asks vLLM to append token usage in the final SSE chunk. Disable this if a model or server has trouble with <code>stream_options</code>.</span>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label" data-i18n="settings.gooseDb">Goose Sessions Database</label>
             <div style="display:flex;gap:8px">
               <input type="text" id="setting-gooseSessionsDb" class="settings-input" style="flex:1" placeholder="C:\Users\...\Block\goose\data\sessions\sessions.db">
-              <button onclick="detectGoose()" class="settings-detect-btn">Auto-Detect</button>
+              <button onclick="detectGoose()" class="settings-detect-btn" data-i18n="settings.autoDetect">Auto-Detect</button>
             </div>
-            <span class="settings-help" id="goose-db-status">Path to Goose's sessions.db for chat names and lifetime stats</span>
+            <span class="settings-help" id="goose-db-status" data-i18n="settings.gooseDbHelp">Path to Goose's sessions.db for chat names and lifetime stats</span>
           </div>
           <div class="settings-group">
-            <label class="settings-label">Hardware Name</label>
+            <label class="settings-label" data-i18n="settings.hwName">Hardware Name</label>
             <input type="text" id="setting-hwName" class="settings-input" placeholder="Asus GX10">
           </div>
           <div class="settings-row">
             <div class="settings-group" style="flex:1">
-              <label class="settings-label">Purchase Price ($)</label>
+              <label class="settings-label" data-i18n="settings.purchasePrice">Purchase Price ($)</label>
               <input type="number" id="setting-purchasePrice" class="settings-input" step="1" placeholder="2000">
             </div>
             <div class="settings-group" style="flex:1">
-              <label class="settings-label">Expected Lifespan (years)</label>
+              <label class="settings-label" data-i18n="settings.lifespan">Expected Lifespan (years)</label>
               <input type="number" id="setting-lifespanYears" class="settings-input" step="0.5" placeholder="5">
             </div>
           </div>
           <div class="settings-row">
             <div class="settings-group" style="flex:1">
-              <label class="settings-label">GPU Watts</label>
+              <label class="settings-label" data-i18n="settings.gpuWatts">GPU Watts</label>
               <input type="number" id="setting-gpuWatts" class="settings-input" placeholder="125">
             </div>
             <div class="settings-group" style="flex:1">
-              <label class="settings-label">Electricity $/kWh</label>
+              <label class="settings-label" data-i18n="settings.electricityCost">Electricity $/kWh</label>
               <input type="number" id="setting-electricityCost" class="settings-input" step="0.01" placeholder="0.12">
             </div>
           </div>
@@ -338,32 +347,38 @@
           <!-- Hardware Cost Calculator -->
           <div id="hw-cost-calculator" class="settings-calculator" style="display:none">
             <div class="settings-calc-header">
-              <span class="settings-label" style="margin:0">Calculated Local Cost</span>
-              <button type="button" onclick="applyCalculatedPricing()" class="settings-detect-btn">Apply to Pricing</button>
+              <span class="settings-label" style="margin:0" data-i18n="settings.calcTitle">Calculated Local Cost</span>
+              <button type="button" onclick="applyCalculatedPricing()" class="settings-detect-btn" data-i18n="settings.applyPricing">Apply to Pricing</button>
             </div>
             <div class="settings-calc-body">
               <div class="settings-calc-row">
-                <span>Hourly depreciation</span>
+                <span data-i18n="settings.calcDepreciation">Hourly depreciation</span>
                 <span id="calc-depreciation">—</span>
               </div>
               <div class="settings-calc-row">
-                <span>Hourly electricity</span>
+                <span data-i18n="settings.calcElectricity">Hourly electricity</span>
                 <span id="calc-electricity">—</span>
               </div>
               <div class="settings-calc-row" style="font-weight:600;border-top:1px solid var(--border);padding-top:6px">
-                <span>Total cost/hour of GPU time</span>
+                <span data-i18n="settings.calcHourlyTotal">Total cost/hour of GPU time</span>
                 <span id="calc-hourly-total">—</span>
               </div>
               <div class="settings-calc-row" style="margin-top:8px">
-                <span>Output cost/M tokens <span style="color:var(--text-dim);font-size:11px">(at <span id="calc-tps">40</span> tok/s)</span></span>
+                <span>
+                  <span data-i18n="settings.calcOutputCost">Output cost/M tokens</span>
+                  <span style="color:var(--text-dim);font-size:11px" id="calc-tps-label"></span>
+                </span>
                 <span id="calc-output-cost">—</span>
               </div>
               <div class="settings-calc-row">
-                <span>Input cost/M tokens <span style="color:var(--text-dim);font-size:11px">(prefill ~10x faster)</span></span>
+                <span>
+                  <span data-i18n="settings.calcInputCost">Input cost/M tokens</span>
+                  <span style="color:var(--text-dim);font-size:11px" data-i18n="settings.prefillFaster">(prefill ~10x faster)</span>
+                </span>
                 <span id="calc-input-cost">—</span>
               </div>
               <div class="settings-calc-row" style="margin-top:8px;border-top:1px solid var(--border);padding-top:6px">
-                <span>Breakeven vs <span id="calc-compare-model">gpt-5.2</span></span>
+                <span><span data-i18n="settings.calcBreakevenLabel">Breakeven vs</span> <span id="calc-compare-model">gpt-5.2</span></span>
                 <span id="calc-breakeven">—</span>
               </div>
             </div>
@@ -371,27 +386,28 @@
 
           <div class="settings-row">
             <div class="settings-group" style="flex:1">
-              <label class="settings-label">Local Cost: Input $/M tokens</label>
+              <label class="settings-label" data-i18n="settings.localInputPrice">Local Cost: Input $/M tokens</label>
               <input type="number" id="setting-localInput" class="settings-input" step="0.001" placeholder="0.02">
             </div>
             <div class="settings-group" style="flex:1">
-              <label class="settings-label">Local Cost: Output $/M tokens</label>
+              <label class="settings-label" data-i18n="settings.localOutputPrice">Local Cost: Output $/M tokens</label>
               <input type="number" id="setting-localOutput" class="settings-input" step="0.001" placeholder="0.10">
             </div>
           </div>
-          <span class="settings-help">Set manually, or use the calculator above to derive from hardware costs</span>
+          <span class="settings-help" data-i18n="settings.pricingHelp">Set manually, or use the calculator above to derive from hardware costs</span>
           <div class="settings-group">
-            <label class="settings-label">Default Cloud Comparison Model</label>
+            <label class="settings-label" data-i18n="settings.defaultCompare">Default Cloud Comparison Model</label>
             <select id="setting-defaultCompare" class="settings-input"></select>
           </div>
           <div class="settings-actions">
-            <button onclick="saveSettings()" class="settings-save-btn">Save Settings</button>
+            <button onclick="saveSettings()" class="settings-save-btn" data-i18n="settings.save">Save Settings</button>
             <span id="settings-status"></span>
           </div>
         </div>
       </div>
     </div>
 
+  <script src="i18n.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>

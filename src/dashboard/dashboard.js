@@ -103,10 +103,10 @@ async function updateStats() {
 
   document.getElementById('total-tokens').textContent = fmt(stats.total_tokens);
   document.getElementById('token-breakdown').textContent =
-    `${fmt(stats.total_prompt_tokens)} in / ${fmt(stats.total_completion_tokens)} out`;
+    t('stats.tokenBreakdown', { in: fmt(stats.total_prompt_tokens), out: fmt(stats.total_completion_tokens) });
   document.getElementById('total-requests').textContent = fmt(stats.total_requests);
   document.getElementById('avg-latency').textContent =
-    `${Math.round(stats.avg_latency_ms)}ms avg latency`;
+    t('stats.avgLatency', { ms: Math.round(stats.avg_latency_ms) });
   document.getElementById('avg-tps').textContent =
     Number(stats.avg_tokens_per_second).toFixed(1);
   document.getElementById('local-cost').textContent = fmtCost(stats.total_local_cost);
@@ -117,13 +117,14 @@ async function updateStats() {
   const inPrice = stats.local_input_per_million;
   const outPrice = stats.local_output_per_million;
   document.getElementById('local-pricing-label').textContent =
-    `$${inPrice}/M in, $${outPrice}/M out`;
-  document.getElementById('cloud-model-label').textContent = `vs ${currentDefaultModel}`;
+    t('stats.pricingLabel', { inPrice, outPrice });
+  document.getElementById('cloud-model-label').textContent =
+    t('stats.vsModel', { model: currentDefaultModel });
 
   const pct = stats.total_cloud_cost > 0
     ? ((stats.savings / stats.total_cloud_cost) * 100).toFixed(1)
     : '0';
-  document.getElementById('savings-pct').textContent = `${pct}% savings vs cloud`;
+  document.getElementById('savings-pct').textContent = t('stats.savingsPct', { pct });
 }
 
 // --- Charts ---
@@ -172,7 +173,7 @@ async function updateUsageChart() {
       labels,
       datasets: [
         {
-          label: 'Prompt Tokens (Input)',
+          label: t('chart.promptTokens'),
           data: promptData,
           borderColor: chartColors.prompt,
           backgroundColor: chartColors.promptBg,
@@ -181,7 +182,7 @@ async function updateUsageChart() {
           yAxisID: 'yInput'
         },
         {
-          label: 'Completion Tokens (Output)',
+          label: t('chart.completionTokens'),
           data: completionData,
           borderColor: chartColors.completion,
           backgroundColor: chartColors.completionBg,
@@ -203,14 +204,14 @@ async function updateUsageChart() {
         yInput: {
           type: 'linear',
           position: 'left',
-          title: { display: true, text: 'Input Tokens', color: chartColors.prompt },
+          title: { display: true, text: t('chart.inputTokens'), color: chartColors.prompt },
           ticks: { color: chartColors.prompt, font: { size: 10 } },
           grid: { color: '#2a2e3e' }
         },
         yOutput: {
           type: 'linear',
           position: 'right',
-          title: { display: true, text: 'Output Tokens', color: chartColors.completion },
+          title: { display: true, text: t('chart.outputTokens'), color: chartColors.completion },
           ticks: { color: chartColors.completion, font: { size: 10 } },
           grid: { drawOnChartArea: false }
         }
@@ -276,17 +277,17 @@ async function updateCostComparison() {
 
   const colCount = 5 + selectedCompareModels.length;
   thead.innerHTML = `<tr>
-    <th>Local Model</th>
-    <th>Input Tokens</th>
-    <th>Output Tokens</th>
-    <th>Local Cost<div class="cost-col-pricing">in + out</div></th>
+    <th>${t('cost.colLocalModel')}</th>
+    <th>${t('cost.colInputTokens')}</th>
+    <th>${t('cost.colOutputTokens')}</th>
+    <th>${t('cost.colLocalCost')}<div class="cost-col-pricing">${t('cost.inOut')}</div></th>
     ${modelHeaders}
-    <th>Best Savings</th>
+    <th>${t('cost.colBestSavings')}</th>
   </tr>`;
 
   if (data.length === 0) {
     tbody.innerHTML = '<tr><td colspan="' + colCount +
-      '" style="text-align:center;color:var(--text-dim)">No data yet</td></tr>';
+      '" style="text-align:center;color:var(--text-dim)">' + t('cost.noData') + '</td></tr>';
     tfoot.innerHTML = '';
     return;
   }
@@ -331,7 +332,7 @@ async function updateCostComparison() {
       <td>${fmt(row.total_completion_tokens)}</td>
       <td><span class="cost-total">${fmtCost(row.total_local_cost)}</span><span class="cost-breakdown">${fmtCost(localInCost)} + ${fmtCost(localOutCost)}</span></td>
       ${cloudCells}
-      <td class="${cls}">${fmtCost(Math.abs(bestSaving))} ${bestSaving >= 0 ? 'saved' : 'extra'}</td>
+      <td class="${cls}">${fmtCost(Math.abs(bestSaving))} ${bestSaving >= 0 ? t('cost.saved') : t('cost.extra')}</td>
     </tr>`;
   }).join('');
 
@@ -350,12 +351,12 @@ async function updateCostComparison() {
   const totalCls = totalSaving >= 0 ? 'savings-positive' : 'savings-negative';
 
   tfoot.innerHTML = `<tr>
-    <td>TOTAL</td>
+    <td>${t('cost.total')}</td>
     <td>${fmt(totalPrompt)}</td>
     <td>${fmt(totalCompletion)}</td>
     <td>${fmtCost(totalLocal)}</td>
     ${totalCloudCells}
-    <td class="${totalCls}">${fmtCost(Math.abs(totalSaving))} ${totalSaving >= 0 ? 'saved' : 'extra'}</td>
+    <td class="${totalCls}">${fmtCost(Math.abs(totalSaving))} ${totalSaving >= 0 ? t('cost.saved') : t('cost.extra')}</td>
   </tr>`;
 }
 
@@ -367,17 +368,17 @@ async function updateRequestLog() {
   const tbody = document.getElementById('request-table-body');
 
   if (data.requests.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-dim)">No requests yet. Start using Goose!</td></tr>';
-    document.getElementById('page-info').textContent = 'No requests';
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-dim)">${t('log.noRequestsYet')}</td></tr>`;
+    document.getElementById('page-info').textContent = t('log.noRequests');
     return;
   }
 
   tbody.innerHTML = data.requests.map(r => {
     const typeBadge = r.is_streaming
-      ? '<span class="badge badge-stream">stream</span>'
-      : '<span class="badge badge-sync">sync</span>';
+      ? `<span class="badge badge-stream">${t('badge.stream')}</span>`
+      : `<span class="badge badge-sync">${t('badge.sync')}</span>`;
     const errorBadge = r.error
-      ? ' <span class="badge badge-error">error</span>'
+      ? ` <span class="badge badge-error">${t('badge.error')}</span>`
       : '';
     return `<tr>
       <td>${fmtTime(r.timestamp)}</td>
@@ -394,7 +395,8 @@ async function updateRequestLog() {
 
   const start = currentPage * PAGE_SIZE + 1;
   const end = Math.min(start + data.requests.length - 1, data.total);
-  document.getElementById('page-info').textContent = `Showing ${start}-${end} of ${data.total}`;
+  document.getElementById('page-info').textContent =
+    t('log.showing', { start, end, total: data.total });
   document.getElementById('prev-btn').disabled = currentPage === 0;
   document.getElementById('next-btn').disabled = end >= data.total;
 }
@@ -407,13 +409,15 @@ async function updateGroupedRequests() {
   const container = document.getElementById('grouped-list');
 
   if (groups.length === 0) {
-    container.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px">No requests yet</p>';
+    container.innerHTML = `<p style="text-align:center;color:var(--text-dim);padding:20px">${t('log.noRequestsGroup')}</p>`;
     return;
   }
 
   container.innerHTML = groups.map((g, i) => {
     const title = currentGroupBy === 'session'
-      ? (g.group_id === 'no-session' ? 'Ungrouped Requests' : `Session: ${esc(g.group_id).substring(0, 20)}...`)
+      ? (g.group_id === 'no-session'
+          ? t('log.ungrouped')
+          : t('log.session', { id: esc(g.group_id).substring(0, 20) }) + '...')
       : `${fmtDateTime(g.first_request)} — ${fmtTime(g.last_request)}`;
 
     const savings = g.total_cloud_cost - g.total_local_cost;
@@ -423,16 +427,16 @@ async function updateGroupedRequests() {
       <div class="group-header" onclick="toggleGroup(${i})">
         <span class="group-title">${title}</span>
         <div class="group-meta">
-          <span>${g.request_count} reqs</span>
+          <span>${t('log.reqs', { n: g.request_count })}</span>
           <span class="highlight">${fmt(g.total_tokens)} tokens</span>
           <span>${Number(g.avg_tokens_per_second).toFixed(1)} tok/s</span>
-          <span>Local: ${fmtCost(g.total_local_cost)}</span>
-          <span class="${savingsClass}">Saved: ${fmtCost(Math.abs(savings))}</span>
+          <span>${t('log.local')} ${fmtCost(g.total_local_cost)}</span>
+          <span class="${savingsClass}">${t('log.savedLabel')} ${fmtCost(Math.abs(savings))}</span>
           <span>${esc(g.models)}</span>
         </div>
       </div>
       <div class="group-body" id="group-body-${i}" data-group-id="${esc(g.group_id)}">
-        <p style="color:var(--text-dim);padding:8px 0;font-size:12px">Click to load details...</p>
+        <p style="color:var(--text-dim);padding:8px 0;font-size:12px">${t('log.clickLoad')}</p>
       </div>
     </div>`;
   }).join('');
@@ -454,19 +458,22 @@ window.toggleGroup = async function(index) {
   const requests = await fetchJson(`/api/requests/group/${encodeURIComponent(groupId)}?by=${currentGroupBy}`);
 
   if (requests.length === 0) {
-    body.innerHTML = '<p style="color:var(--text-dim);padding:8px">No requests found</p>';
+    body.innerHTML = `<p style="color:var(--text-dim);padding:8px">${t('log.noFound')}</p>`;
     return;
   }
 
   body.innerHTML = `<table>
     <thead><tr>
-      <th>Time</th><th>Model</th><th>In</th><th>Out</th>
-      <th>Latency</th><th>Tok/s</th><th>Local</th><th>Cloud</th><th>Type</th>
+      <th>${t('log.colTime')}</th><th>${t('log.colModel')}</th>
+      <th>${t('log.colIn')}</th><th>${t('log.colOut')}</th>
+      <th>${t('log.colLatency')}</th><th>${t('log.colTps')}</th>
+      <th>${t('log.colLocal')}</th><th>${t('log.colCloud')}</th>
+      <th>${t('log.colType')}</th>
     </tr></thead>
     <tbody>${requests.map(r => {
       const badge = r.is_streaming
-        ? '<span class="badge badge-stream">stream</span>'
-        : '<span class="badge badge-sync">sync</span>';
+        ? `<span class="badge badge-stream">${t('badge.stream')}</span>`
+        : `<span class="badge badge-sync">${t('badge.sync')}</span>`;
       return `<tr>
         <td>${fmtTime(r.timestamp)}</td>
         <td>${esc(r.model)}</td>
@@ -491,21 +498,23 @@ async function updateHealth() {
     const hwInfo = document.getElementById('hw-info');
 
     if (health.vllm_status === 'connected') {
-      el.innerHTML = '<span class="status-dot connected"></span> vLLM Connected';
+      el.innerHTML = `<span class="status-dot connected"></span> ${t('status.connected')}`;
     } else {
       el.innerHTML = `<span class="status-dot error"></span> vLLM ${health.vllm_status}`;
     }
 
     const mins = Math.floor(health.uptime_seconds / 60);
     const hrs = Math.floor(mins / 60);
-    uptime.textContent = hrs > 0 ? `Uptime: ${hrs}h ${mins % 60}m` : `Uptime: ${mins}m`;
+    uptime.textContent = hrs > 0
+      ? t('status.uptimeHM', { h: hrs, m: mins % 60 })
+      : t('status.uptimeM', { m: mins });
 
     if (health.hardware) {
       hwInfo.textContent = `${health.hardware.name} (${health.hardware.gpuWatts}W)`;
     }
   } catch (e) {
     document.getElementById('vllm-status').innerHTML =
-      '<span class="status-dot error"></span> Proxy Error';
+      `<span class="status-dot error"></span> ${t('status.proxyError')}`;
   }
 }
 
@@ -602,7 +611,7 @@ async function updateVllmMetrics() {
   try {
     const data = await fetchJson('/api/vllm-metrics');
     if (data.error) {
-      document.getElementById('vllm-engine-state').textContent = 'Waiting...';
+      document.getElementById('vllm-engine-state').textContent = t('vllm.waiting');
       return;
     }
 
@@ -612,17 +621,17 @@ async function updateVllmMetrics() {
     // Engine state
     const stateEl = document.getElementById('vllm-engine-state');
     if (data.engine.awake) {
-      stateEl.textContent = 'Awake';
+      stateEl.textContent = t('vllm.awake');
       stateEl.style.color = 'var(--green)';
     } else if (data.engine.weightsOffloaded) {
-      stateEl.textContent = 'Sleeping (L1)';
+      stateEl.textContent = t('vllm.sleepingL1');
       stateEl.style.color = 'var(--yellow)';
     } else {
-      stateEl.textContent = 'Sleeping';
+      stateEl.textContent = t('vllm.sleeping');
       stateEl.style.color = 'var(--text-dim)';
     }
     document.getElementById('vllm-queue').textContent =
-      `${data.engine.requestsRunning} running / ${data.engine.requestsWaiting} waiting`;
+      t('vllm.runningWaiting', { running: data.engine.requestsRunning, waiting: data.engine.requestsWaiting });
 
     // KV Cache
     const kvPct = data.cache.kvUsagePercent;
@@ -634,35 +643,37 @@ async function updateVllmMetrics() {
     // Prefix cache hit rate
     document.getElementById('vllm-cache-hit').textContent = data.cache.prefixHitRate.toFixed(1) + '%';
     document.getElementById('vllm-cache-detail').textContent =
-      `${fmt(data.cache.prefixHits)} / ${fmt(data.cache.prefixQueries)} tokens`;
+      t('vllm.cacheDetail', { hits: fmt(data.cache.prefixHits), queries: fmt(data.cache.prefixQueries) });
 
     // Latency
     document.getElementById('vllm-ttft').textContent = fmtMs(data.latency.avgTimeToFirstToken);
     document.getElementById('vllm-itl').textContent =
-      `inter-token: ${fmtMs(data.latency.avgInterTokenLatency)}`;
+      t('vllm.interToken', { v: fmtMs(data.latency.avgInterTokenLatency) });
     document.getElementById('vllm-e2e').textContent = fmtMs(data.latency.avgE2eLatency);
     document.getElementById('vllm-phases').textContent =
-      `prefill: ${fmtMs(data.latency.avgPrefillTime)} / decode: ${fmtMs(data.latency.avgDecodeTime)}`;
+      t('vllm.phases', { prefill: fmtMs(data.latency.avgPrefillTime), decode: fmtMs(data.latency.avgDecodeTime) });
 
     // Totals
     document.getElementById('vllm-total-reqs').textContent = fmt(data.requests.total);
     document.getElementById('vllm-total-tokens').textContent =
-      `${fmt(data.tokens.totalPrompt)} prompt / ${fmt(data.tokens.totalGeneration)} gen`;
+      t('vllm.tokens', { prompt: fmt(data.tokens.totalPrompt), gen: fmt(data.tokens.totalGeneration) });
 
     // Prompt token sources
     const totalPromptSrc = data.tokens.promptCached + data.tokens.promptComputed;
     const cachedPct = totalPromptSrc > 0 ? (data.tokens.promptCached / totalPromptSrc * 100) : 0;
-    document.getElementById('vllm-prompt-cached').textContent = cachedPct.toFixed(0) + '% cached';
+    document.getElementById('vllm-prompt-cached').textContent =
+      t('vllm.cachedPct', { pct: cachedPct.toFixed(0) });
     document.getElementById('vllm-prompt-breakdown').textContent =
-      `${fmt(data.tokens.promptCached)} cached / ${fmt(data.tokens.promptComputed)} computed`;
+      t('vllm.cacheDetail', { hits: fmt(data.tokens.promptCached), queries: fmt(data.tokens.promptComputed) })
+      + ' \u2014 ' + t('vllm.cachedVsComputed');
 
     // Process
     document.getElementById('vllm-memory').textContent = data.process.residentMemoryMB + ' MB';
     document.getElementById('vllm-cpu').textContent =
-      `CPU: ${data.process.cpuSeconds.toFixed(0)}s / vMem: ${data.process.virtualMemoryGB} GB`;
+      t('vllm.cpu', { cpu: data.process.cpuSeconds.toFixed(0), vMem: data.process.virtualMemoryGB });
 
   } catch (e) {
-    document.getElementById('vllm-engine-state').textContent = 'Unreachable';
+    document.getElementById('vllm-engine-state').textContent = t('vllm.unreachable');
     document.getElementById('vllm-engine-state').style.color = 'var(--red)';
   }
 }
@@ -689,7 +700,7 @@ async function updateVllmHistoryChart() {
         labels,
         datasets: [
           {
-            label: 'KV Cache %',
+            label: t('chart.kvCache'),
             data: kvData,
             borderColor: '#6c63ff',
             backgroundColor: 'rgba(107, 99, 255, 0.1)',
@@ -698,7 +709,7 @@ async function updateVllmHistoryChart() {
             yAxisID: 'y'
           },
           {
-            label: 'Running',
+            label: t('chart.running'),
             data: runningData,
             borderColor: '#22c55e',
             backgroundColor: 'rgba(34, 197, 94, 0.1)',
@@ -707,7 +718,7 @@ async function updateVllmHistoryChart() {
             yAxisID: 'y1'
           },
           {
-            label: 'Waiting',
+            label: t('chart.waiting'),
             data: waitingData,
             borderColor: '#f97316',
             backgroundColor: 'rgba(249, 115, 22, 0.1)',
@@ -729,14 +740,14 @@ async function updateVllmHistoryChart() {
           y: {
             type: 'linear', position: 'left',
             min: 0, max: 100,
-            title: { display: true, text: 'KV Cache %', color: '#8b8fa3' },
+            title: { display: true, text: t('chart.kvCachePct'), color: '#8b8fa3' },
             ticks: { color: '#8b8fa3', font: { size: 10 } },
             grid: { color: '#2a2e3e' }
           },
           y1: {
             type: 'linear', position: 'right',
             min: 0,
-            title: { display: true, text: 'Requests', color: '#8b8fa3' },
+            title: { display: true, text: t('chart.requests'), color: '#8b8fa3' },
             ticks: { color: '#8b8fa3', font: { size: 10 }, stepSize: 1 },
             grid: { drawOnChartArea: false }
           }
@@ -786,7 +797,7 @@ function renderChatView(data) {
 function renderChatTiles(chats) {
   const container = document.getElementById('chat-tiles-view');
   if (chats.length === 0) {
-    container.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:40px;grid-column:1/-1">No chats yet. Start using Goose through the tracker!</p>';
+    container.innerHTML = `<p style="text-align:center;color:var(--text-dim);padding:40px;grid-column:1/-1">${t('chat.noChatsYet')}</p>`;
     return;
   }
 
@@ -807,19 +818,19 @@ function renderChatTiles(chats) {
       ${project ? `<div class="chat-tile-project" title="${esc(c.working_dir)}">${project}</div>` : '<div class="chat-tile-project">—</div>'}
       <div class="chat-tile-stats">
         <div class="chat-tile-stat">
-          <span class="chat-tile-stat-label">Input</span>
+          <span class="chat-tile-stat-label">${t('chat.input')}</span>
           <span class="chat-tile-stat-value purple">${fmt(c.total_prompt_tokens)}</span>
         </div>
         <div class="chat-tile-stat">
-          <span class="chat-tile-stat-label">Output</span>
+          <span class="chat-tile-stat-label">${t('chat.output')}</span>
           <span class="chat-tile-stat-value blue">${fmt(c.total_completion_tokens)}</span>
         </div>
         <div class="chat-tile-stat">
-          <span class="chat-tile-stat-label">Local Cost</span>
+          <span class="chat-tile-stat-label">${t('chat.localCost')}</span>
           <span class="chat-tile-stat-value">${fmtCost(c.total_local_cost)}</span>
         </div>
         <div class="chat-tile-stat">
-          <span class="chat-tile-stat-label">Saved</span>
+          <span class="chat-tile-stat-label">${t('chat.saved')}</span>
           <span class="chat-tile-stat-value green">${fmtCost(Math.abs(savings))}</span>
         </div>
       </div>
@@ -827,7 +838,7 @@ function renderChatTiles(chats) {
         <div class="chat-tile-bar-in" style="width:${inPct}%"></div>
         <div class="chat-tile-bar-out" style="width:${outPct}%"></div>
       </div>
-      <div class="chat-tile-date">${c.request_count} reqs &middot; ${fmtDateTime(c.created_at)}</div>
+      <div class="chat-tile-date">${t('chat.reqs', { n: c.request_count })} &middot; ${fmtDateTime(c.created_at)}</div>
     </div>`;
   }).join('');
 }
@@ -845,13 +856,13 @@ function renderChatBarChart(chats) {
       labels: sorted.map(c => c.name.length > 25 ? c.name.substring(0, 25) + '...' : c.name),
       datasets: [
         {
-          label: 'Input Tokens',
+          label: t('chart.inputTokens'),
           data: sorted.map(c => c.total_prompt_tokens),
           backgroundColor: 'rgba(107, 99, 255, 0.7)',
           borderRadius: 4
         },
         {
-          label: 'Output Tokens',
+          label: t('chart.outputTokens'),
           data: sorted.map(c => c.total_completion_tokens),
           backgroundColor: 'rgba(34, 197, 94, 0.7)',
           borderRadius: 4
@@ -869,7 +880,7 @@ function renderChatBarChart(chats) {
             afterBody: function(items) {
               const idx = items[0].dataIndex;
               const chat = sorted[idx];
-              return `Local: ${fmtCost(chat.total_local_cost)} | Saved: ${fmtCost(chat.savings)}`;
+              return `${t('log.local')} ${fmtCost(chat.total_local_cost)} | ${t('log.savedLabel')} ${fmtCost(chat.savings)}`;
             }
           }
         }
@@ -896,7 +907,7 @@ function renderProjectView(chats) {
   // Group chats by project (working_dir)
   const projects = {};
   for (const c of chats) {
-    const proj = projectName(c.working_dir) || '(No Project)';
+    const proj = projectName(c.working_dir) || t('chat.noProject');
     if (!projects[proj]) {
       projects[proj] = {
         name: proj,
@@ -926,7 +937,7 @@ function renderProjectView(chats) {
   const maxTokens = Math.max(...sorted.map(p => p.total_tokens || 1));
 
   if (sorted.length === 0) {
-    container.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:40px;grid-column:1/-1">No projects found</p>';
+    container.innerHTML = `<p style="text-align:center;color:var(--text-dim);padding:40px;grid-column:1/-1">${t('chat.noProjects')}</p>`;
     return;
   }
 
@@ -957,19 +968,23 @@ function renderProjectView(chats) {
       </tr>`;
     }).join('');
 
+    const chatCountStr = p.chats.length === 1
+      ? t('chat.chats', { n: 1 })
+      : t('chat.chatsPlural', { n: p.chats.length });
+
     return `<div class="project-card" onclick="toggleProject(${idx})">
       <div class="project-card-header">
         <div class="project-card-title">
           <span class="project-expand-icon" id="project-icon-${idx}">&#9654;</span>
           <span class="chat-tile-name" title="${esc(p.working_dir)}">${esc(p.name)}</span>
-          <span class="project-card-meta">${p.chats.length} chat${p.chats.length !== 1 ? 's' : ''} &middot; ${p.request_count} requests</span>
+          <span class="project-card-meta">${chatCountStr} &middot; ${t('chat.requestsMeta', { n: p.request_count })}</span>
         </div>
         <div class="project-card-stats">
-          <span class="project-stat"><span class="project-stat-label">Input</span> <span class="purple">${fmt(p.total_prompt_tokens)}</span></span>
-          <span class="project-stat"><span class="project-stat-label">Output</span> <span class="blue">${fmt(p.total_completion_tokens)}</span></span>
-          <span class="project-stat"><span class="project-stat-label">Local</span> ${fmtCost(p.total_local_cost)}</span>
-          <span class="project-stat"><span class="project-stat-label">Cloud</span> <span class="orange">${fmtCost(p.total_cloud_cost)}</span></span>
-          <span class="project-stat"><span class="project-stat-label">Saved</span> <span class="green">${fmtCost(Math.abs(p.savings))}</span></span>
+          <span class="project-stat"><span class="project-stat-label">${t('chat.projInput')}</span> <span class="purple">${fmt(p.total_prompt_tokens)}</span></span>
+          <span class="project-stat"><span class="project-stat-label">${t('chat.projOutput')}</span> <span class="blue">${fmt(p.total_completion_tokens)}</span></span>
+          <span class="project-stat"><span class="project-stat-label">${t('chat.projLocal')}</span> ${fmtCost(p.total_local_cost)}</span>
+          <span class="project-stat"><span class="project-stat-label">${t('chat.projCloud')}</span> <span class="orange">${fmtCost(p.total_cloud_cost)}</span></span>
+          <span class="project-stat"><span class="project-stat-label">${t('chat.projSaved')}</span> <span class="green">${fmtCost(Math.abs(p.savings))}</span></span>
         </div>
       </div>
       <div class="chat-tile-bar" style="width:${barWidth}%;margin:8px 0 0">
@@ -980,8 +995,15 @@ function renderProjectView(chats) {
         <div class="table-scroll">
           <table style="font-size:12px">
             <thead><tr>
-              <th>Chat Name</th><th>Input</th><th>Output</th><th>Total</th>
-              <th>Local Cost</th><th>Cloud Cost</th><th>Saved</th><th>Reqs</th><th>Date</th>
+              <th>${t('chat.projColName')}</th>
+              <th>${t('chat.projColInput')}</th>
+              <th>${t('chat.projColOutput')}</th>
+              <th>${t('chat.projColTotal')}</th>
+              <th>${t('chat.projColLocal')}</th>
+              <th>${t('chat.projColCloud')}</th>
+              <th>${t('chat.projColSaved')}</th>
+              <th>${t('chat.projColReqs')}</th>
+              <th>${t('chat.projColDate')}</th>
             </tr></thead>
             <tbody>${chatRows}</tbody>
           </table>
@@ -1004,7 +1026,7 @@ window.toggleProject = function(idx) {
 function renderChatTable(chats) {
   const tbody = document.getElementById('chat-table-body');
   if (chats.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-dim)">No chats</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-dim)">${t('chat.noChats')}</td></tr>`;
     return;
   }
 
@@ -1034,7 +1056,7 @@ window.openChatDetail = async function(sessionId) {
   const nameEl = document.getElementById('chat-detail-name');
 
   modal.style.display = 'flex';
-  body.innerHTML = '<p style="color:var(--text-dim);padding:20px;text-align:center">Loading...</p>';
+  body.innerHTML = `<p style="color:var(--text-dim);padding:20px;text-align:center">${t('chat.loading')}</p>`;
 
   const data = await fetchJson(`/api/chats/${encodeURIComponent(sessionId)}`);
 
@@ -1046,7 +1068,7 @@ window.openChatDetail = async function(sessionId) {
 
   const gooseOnlyNote = data.goose_only
     ? `<div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--text)">
-        Token data from Goose's sessions database (this chat was not routed through the proxy). Per-request breakdown not available.
+        ${t('chat.gooseOnlyNote')}
       </div>`
     : '';
 
@@ -1054,47 +1076,47 @@ window.openChatDetail = async function(sessionId) {
     <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">
       ${project ? `<span style="color:var(--accent)">${project}</span> &middot; ` : ''}
       ${data.provider || ''} &middot; ${data.goose_mode || ''} mode &middot;
-      ${data.message_count} messages &middot; Created ${fmtDateTime(data.created_at)}
+      ${data.message_count} ${t('chat.messages')} &middot; ${t('chat.created')} ${fmtDateTime(data.created_at)}
     </div>
     ${gooseOnlyNote}
     <div class="chat-detail-grid">
       <div class="chat-detail-card">
-        <div class="chat-detail-label">Requests</div>
+        <div class="chat-detail-label">${t('chat.colRequests')}</div>
         <div class="chat-detail-value">${data.request_count}</div>
       </div>
       <div class="chat-detail-card">
-        <div class="chat-detail-label">Input Tokens</div>
+        <div class="chat-detail-label">${t('chat.colInputTokens')}</div>
         <div class="chat-detail-value">${fmt(data.total_prompt_tokens)}</div>
       </div>
       <div class="chat-detail-card">
-        <div class="chat-detail-label">Output Tokens</div>
+        <div class="chat-detail-label">${t('chat.colOutputTokens')}</div>
         <div class="chat-detail-value">${fmt(data.total_completion_tokens)}</div>
       </div>
       <div class="chat-detail-card">
-        <div class="chat-detail-label">Total Tokens</div>
+        <div class="chat-detail-label">${t('chat.totalTokens')}</div>
         <div class="chat-detail-value">${fmt(data.total_tokens)}</div>
       </div>
       <div class="chat-detail-card">
-        <div class="chat-detail-label">Avg Latency</div>
+        <div class="chat-detail-label">${t('chat.avgLatency')}</div>
         <div class="chat-detail-value">${data.avg_latency_ms}ms</div>
       </div>
       <div class="chat-detail-card">
-        <div class="chat-detail-label">Avg Tok/s</div>
+        <div class="chat-detail-label">${t('chat.avgTps')}</div>
         <div class="chat-detail-value">${data.avg_tokens_per_second}</div>
       </div>
       <div class="chat-detail-card">
-        <div class="chat-detail-label">Local Cost</div>
+        <div class="chat-detail-label">${t('chat.colLocalCost')}</div>
         <div class="chat-detail-value">${fmtCost(data.local_cost)}</div>
       </div>
       <div class="chat-detail-card">
-        <div class="chat-detail-label">Saved</div>
+        <div class="chat-detail-label">${t('chat.saved')}</div>
         <div class="chat-detail-value green">${fmtCost(Math.abs(savings))}</div>
       </div>
     </div>`;
 
   // Cloud cost comparison for this chat
   if (Object.keys(data.cloud_costs).length > 0) {
-    html += `<h4 style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px">If this chat ran on cloud</h4>
+    html += `<h4 style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px">${t('chat.ifOnCloud')}</h4>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">`;
     for (const model of selectedCompareModels) {
       const cost = data.cloud_costs[model];
@@ -1103,7 +1125,7 @@ window.openChatDetail = async function(sessionId) {
       html += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px">
         <div style="color:var(--text-dim)">${model}</div>
         <div style="color:var(--text-bright);font-weight:600">${fmtCost(cost)}</div>
-        <div style="color:var(--green);font-size:11px">save ${fmtCost(save)}</div>
+        <div style="color:var(--green);font-size:11px">${t('chat.save', { amount: fmtCost(save) })}</div>
       </div>`;
     }
     html += '</div>';
@@ -1111,9 +1133,17 @@ window.openChatDetail = async function(sessionId) {
 
   // Request list for this chat
   if (data.requests && data.requests.length > 0) {
-    html += `<h4 style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px">Requests (${data.requests.length})</h4>
+    html += `<h4 style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px">${t('chat.requestsTitle', { n: data.requests.length })}</h4>
     <div class="table-scroll"><table style="font-size:12px">
-      <thead><tr><th>Time</th><th>In</th><th>Out</th><th>Latency</th><th>Tok/s</th><th>Local</th><th>Cloud</th></tr></thead>
+      <thead><tr>
+        <th>${t('log.colTime')}</th>
+        <th>${t('chat.colIn')}</th>
+        <th>${t('chat.colOut')}</th>
+        <th>${t('log.colLatency')}</th>
+        <th>${t('log.colTps')}</th>
+        <th>${t('chat.colLocal')}</th>
+        <th>${t('chat.colCloud')}</th>
+      </tr></thead>
       <tbody>`;
     for (const r of data.requests.slice(0, 50)) {
       html += `<tr>
@@ -1127,7 +1157,7 @@ window.openChatDetail = async function(sessionId) {
       </tr>`;
     }
     if (data.requests.length > 50) {
-      html += `<tr><td colspan="7" style="text-align:center;color:var(--text-dim)">... and ${data.requests.length - 50} more</td></tr>`;
+      html += `<tr><td colspan="7" style="text-align:center;color:var(--text-dim)">${t('chat.andMore', { n: data.requests.length - 50 })}</td></tr>`;
     }
     html += '</tbody></table></div>';
   }
@@ -1169,16 +1199,16 @@ async function updateLifetimeStats() {
     const accOut = data.accumulated_output_tokens || data.output_tokens;
     document.getElementById('lifetime-tokens').textContent = fmt(accTotal) + ' tokens';
     document.getElementById('lifetime-breakdown').textContent =
-      `${fmt(accIn)} in / ${fmt(accOut)} out`;
+      t('stats.tokenBreakdown', { in: fmt(accIn), out: fmt(accOut) });
     document.getElementById('lifetime-sessions').textContent =
-      `${data.total_sessions || 0} chats`;
+      t('lifetime.chats', { n: data.total_sessions || 0 });
     document.getElementById('lifetime-messages').textContent =
-      `${(data.total_messages || 0).toLocaleString()} messages`;
+      t('lifetime.messages', { n: (data.total_messages || 0).toLocaleString() });
 
     if (data.first_session) {
       const d = new Date(data.first_session);
-      document.getElementById('lifetime-since').textContent =
-        `since ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      const dateStr = d.toLocaleDateString(t('locale'), { month: 'short', day: 'numeric', year: 'numeric' });
+      document.getElementById('lifetime-since').textContent = t('lifetime.since', { date: dateStr });
     }
   } catch (e) {
     console.warn('Lifetime stats error:', e);
@@ -1206,6 +1236,7 @@ async function loadSettings() {
     const s = await res.json();
 
     document.getElementById('setting-targetUrl').value = s.targetUrl || '';
+    document.getElementById('setting-injectStreamOptions').checked = s.injectStreamOptionsForUsage !== false;
     document.getElementById('setting-gooseSessionsDb').value = s.gooseSessionsDb || '';
     document.getElementById('setting-hwName').value = s.hardware?.name || '';
     document.getElementById('setting-purchasePrice').value = s.hardware?.purchasePrice || '';
@@ -1239,7 +1270,7 @@ async function loadSettings() {
 
     document.getElementById('settings-status').textContent = '';
   } catch (e) {
-    document.getElementById('settings-status').textContent = 'Failed to load settings';
+    document.getElementById('settings-status').textContent = t('settings.loadFailed');
   }
 }
 
@@ -1265,7 +1296,10 @@ function updateHwCalculator() {
 
   // Use tracked avg tok/s, fallback to 40
   const avgTps = parseFloat(document.getElementById('avg-tps')?.textContent) || 40;
-  document.getElementById('calc-tps').textContent = avgTps.toFixed(0);
+
+  // Update the "at X tok/s" label
+  const tpsLabel = document.getElementById('calc-tps-label');
+  if (tpsLabel) tpsLabel.textContent = ' ' + t('settings.atTps', { tps: avgTps.toFixed(0) });
 
   // Output: at avgTps tok/s, 1M tokens takes (1_000_000 / avgTps) seconds = X hours
   const hoursPerMillionOutput = (1_000_000 / avgTps) / 3600;
@@ -1301,21 +1335,17 @@ function updateHwCalculator() {
 
       // Estimate time to breakeven based on actual usage
       let breakevenTime = '';
-      const totalTokensEl = document.getElementById('total-tokens');
-      const uptimeEl = document.getElementById('uptime');
-      if (totalTokensEl) {
-        // Rough: if we know total tokens so far and uptime
-        const tokPerDay = 1_000_000; // conservative estimate: 1M tokens/day
-        const daysToBreakeven = breakevenTokens / tokPerDay;
-        if (daysToBreakeven < 30) breakevenTime = ` (~${Math.ceil(daysToBreakeven)} days)`;
-        else if (daysToBreakeven < 365) breakevenTime = ` (~${(daysToBreakeven / 30).toFixed(1)} months)`;
-        else breakevenTime = ` (~${(daysToBreakeven / 365).toFixed(1)} years)`;
-      }
+      const tokPerDay = 1_000_000; // conservative estimate: 1M tokens/day
+      const daysToBreakeven = breakevenTokens / tokPerDay;
+      if (daysToBreakeven < 30) breakevenTime = ' ' + t('calc.days', { n: Math.ceil(daysToBreakeven) });
+      else if (daysToBreakeven < 365) breakevenTime = ' ' + t('calc.months', { n: (daysToBreakeven / 30).toFixed(1) });
+      else breakevenTime = ' ' + t('calc.years', { n: (daysToBreakeven / 365).toFixed(1) });
 
-      document.getElementById('calc-breakeven').textContent = fmt(breakevenTokens) + ' tokens' + breakevenTime;
+      document.getElementById('calc-breakeven').textContent =
+        t('calc.tokens', { n: fmt(breakevenTokens) }) + breakevenTime;
       document.getElementById('calc-breakeven').style.color = 'var(--green)';
     } else {
-      document.getElementById('calc-breakeven').textContent = 'Local is more expensive!';
+      document.getElementById('calc-breakeven').textContent = t('calc.localExpensive');
       document.getElementById('calc-breakeven').style.color = 'var(--red)';
     }
   }
@@ -1347,11 +1377,12 @@ window.applyCalculatedPricing = function() {
 
 window.saveSettings = async function() {
   const status = document.getElementById('settings-status');
-  status.textContent = 'Saving...';
+  status.textContent = t('settings.saving');
   status.style.color = '#aaa';
 
   const payload = {
     targetUrl: document.getElementById('setting-targetUrl').value.trim(),
+    injectStreamOptionsForUsage: document.getElementById('setting-injectStreamOptions').checked,
     gooseSessionsDb: document.getElementById('setting-gooseSessionsDb').value.trim(),
     hardware: {
       name: document.getElementById('setting-hwName').value.trim(),
@@ -1377,7 +1408,7 @@ window.saveSettings = async function() {
     });
     const data = await res.json();
     if (data.ok) {
-      status.textContent = '✓ Settings saved!';
+      status.textContent = t('settings.saved');
       status.style.color = '#4ade80';
       // Update the default model shown in summary cards
       currentDefaultModel = payload.defaultCompareModel || currentDefaultModel;
@@ -1388,18 +1419,18 @@ window.saveSettings = async function() {
         updateLifetimeStats();
       }, 500);
     } else {
-      status.textContent = data.error || 'Save failed';
+      status.textContent = data.error || t('settings.saveFailed');
       status.style.color = '#f87171';
     }
   } catch (e) {
-    status.textContent = 'Network error saving settings';
+    status.textContent = t('settings.networkError');
     status.style.color = '#f87171';
   }
 };
 
 window.detectGoose = async function() {
   const statusEl = document.getElementById('goose-db-status');
-  statusEl.textContent = 'Searching...';
+  statusEl.textContent = t('settings.searching');
 
   try {
     const res = await fetch('/api/settings/detect-goose', { method: 'POST' });
@@ -1407,14 +1438,17 @@ window.detectGoose = async function() {
 
     if (data.suggested) {
       document.getElementById('setting-gooseSessionsDb').value = data.suggested;
-      statusEl.textContent = `✓ Found! (${data.found.length} location${data.found.length > 1 ? 's' : ''})`;
+      const n = data.found.length;
+      statusEl.textContent = n === 1
+        ? t('settings.found1', { n })
+        : t('settings.foundN', { n });
       statusEl.style.color = '#4ade80';
     } else {
-      statusEl.textContent = `Not found. Searched ${data.searched.length} locations.`;
+      statusEl.textContent = t('settings.notFound', { n: data.searched.length });
       statusEl.style.color = '#f87171';
     }
   } catch (e) {
-    statusEl.textContent = 'Detection failed';
+    statusEl.textContent = t('settings.detectionFailed');
     statusEl.style.color = '#f87171';
   }
 };
@@ -1432,6 +1466,8 @@ async function refreshAll() {
     currentGroupBy === 'none' ? updateRequestLog() : updateGroupedRequests(),
     updateHealth()
   ]);
+  // Re-apply static translations (in case dynamic render overwrote any data-i18n elements)
+  applyTranslations();
 }
 
 // --- Init ---
