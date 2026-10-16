@@ -1,4 +1,5 @@
 Set WshShell = CreateObject("WScript.Shell")
-' Update this path to your goose-token-tracker installation
-WshShell.CurrentDirectory = "C:\path\to\goose-token-tracker"
-WshShell.Run "cmd /c node server.js > data\server.log 2>&1", 0, False
+Set fso = CreateObject("Scripting.FileSystemObject")
+' Run from the folder this script lives in, so no path needs editing
+WshShell.CurrentDirectory = fso.GetParentFolderName(WScript.ScriptFullName)
+WshShell.Run "pythonw tray.py", 0, False

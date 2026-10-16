@@ -116,6 +116,15 @@ router.get('/cloud-models', (req, res) => {
 router.get('/health', (req, res) => {
   const targetUrl = new URL('/v1/models', config.targetUrl);
 
+  // timeout -> destroy() also fires 'error', so only reply once
+  // (replying twice throws ERR_HTTP_HEADERS_SENT and crashes the server)
+  let replied = false;
+  const reply = (body) => {
+    if (replied) return;
+    replied = true;
+    res.json(body);
+  };
+
   const checkReq = http.request({
     hostname: targetUrl.hostname,
     port: targetUrl.port,
@@ -126,7 +135,7 @@ router.get('/health', (req, res) => {
     let body = '';
     checkRes.on('data', chunk => body += chunk);
     checkRes.on('end', () => {
-      res.json({
+      reply({
         status: 'ok',
         proxy_port: config.proxyPort,
         target_url: config.targetUrl,
@@ -140,7 +149,7 @@ router.get('/health', (req, res) => {
   });
 
   checkReq.on('error', (err) => {
-    res.json({
+    reply({
       status: 'ok',
       proxy_port: config.proxyPort,
       target_url: config.targetUrl,
@@ -154,7 +163,7 @@ router.get('/health', (req, res) => {
 
   checkReq.on('timeout', () => {
     checkReq.destroy();
-    res.json({
+    reply({
       status: 'ok',
       proxy_port: config.proxyPort,
       target_url: config.targetUrl,
@@ -173,6 +182,7 @@ router.get('/config', (req, res) => {
   res.json({
     proxyPort: config.proxyPort,
     targetUrl: config.targetUrl,
+    injectStreamOptionsForUsage: config.injectStreamOptionsForUsage !== false,
     cloudComparisonModels: config.cloudComparisonModels,
     localModelPricing: config.localModelPricing,
     hardware: config.hardware,
@@ -206,6 +216,7 @@ router.get('/settings', (req, res) => {
   res.json({
     proxyPort: config.proxyPort,
     targetUrl: config.targetUrl,
+    injectStreamOptionsForUsage: config.injectStreamOptionsForUsage !== false,
     gooseSessionsDb: config.gooseSessionsDb || '',
     hardware: config.hardware || {},
     localModelPricing: config.localModelPricing || {},
@@ -229,6 +240,12 @@ router.post('/settings', (req, res) => {
     }
   }
 
+  // Validate injectStreamOptionsForUsage — must be boolean when present
+  if (updates.injectStreamOptionsForUsage !== undefined &&
+      typeof updates.injectStreamOptionsForUsage !== 'boolean') {
+    return res.status(400).json({ error: 'injectStreamOptionsForUsage must be true or false' });
+  }
+
   // Validate gooseSessionsDb — must end in .db and not contain path traversal
   if (updates.gooseSessionsDb !== undefined && updates.gooseSessionsDb !== '') {
     const dbPath = updates.gooseSessionsDb;
@@ -238,7 +255,7 @@ router.post('/settings', (req, res) => {
   }
 
   // Only allow specific fields to be updated
-  const allowed = ['targetUrl', 'gooseSessionsDb', 'hardware', 'localModelPricing', 'defaultCompareModel'];
+  const allowed = ['targetUrl', 'injectStreamOptionsForUsage', 'gooseSessionsDb', 'hardware', 'localModelPricing', 'defaultCompareModel'];
   let changed = false;
 
   for (const key of allowed) {

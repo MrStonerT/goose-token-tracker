@@ -28,6 +28,32 @@ const app = express();
 
 // Security
 app.disable('x-powered-by');
+
+// Only answer requests addressed to this machine. Binding to 127.0.0.1 is not
+// enough on its own: a malicious web page can use DNS rebinding to make the
+// browser talk to localhost under its own domain, then read chat data or
+// rewrite targetUrl via /api/settings. Checking Host (and Origin when a
+// browser sends one) blocks that.
+const ALLOWED_HOSTS = new Set(
+  ['localhost', '127.0.0.1', '[::1]'].map(h => `${h}:${config.proxyPort}`)
+);
+app.use((req, res, next) => {
+  const host = (req.headers.host || '').toLowerCase();
+  const origin = req.headers.origin;
+  let originOk = true;
+  if (origin) {
+    try {
+      originOk = ALLOWED_HOSTS.has(new URL(origin).host.toLowerCase());
+    } catch (e) {
+      originOk = false;
+    }
+  }
+  if (!ALLOWED_HOSTS.has(host) || !originOk) {
+    return res.status(403).json({ error: 'Forbidden host or origin' });
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; font-src 'self'");

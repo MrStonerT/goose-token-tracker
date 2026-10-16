@@ -125,33 +125,38 @@ function record({ sessionId, model, requestPath, isStreaming, usage, latencyMs, 
   const cloudCost = computeCloudCost(usage.prompt_tokens, usage.completion_tokens);
   const electricityCost = computeElectricityCost(latencyMs);
 
-  database.insertRequest({
-    session_id: sessionId || null,
-    model: model || 'unknown',
-    request_path: requestPath,
-    is_streaming: isStreaming ? 1 : 0,
-    prompt_tokens: usage.prompt_tokens,
-    completion_tokens: usage.completion_tokens,
-    total_tokens: usage.total_tokens,
-    latency_ms: Math.round(latencyMs),
-    tokens_per_second: Math.round(tokensPerSecond * 100) / 100,
-    estimated_local_cost: localCost,
-    estimated_cloud_cost: cloudCost,
-    status_code: statusCode || null,
-    error: error || null
-  });
+  // A tracking failure must never take down the proxy
+  try {
+    database.insertRequest({
+      session_id: sessionId || null,
+      model: model || 'unknown',
+      request_path: requestPath,
+      is_streaming: isStreaming ? 1 : 0,
+      prompt_tokens: usage.prompt_tokens,
+      completion_tokens: usage.completion_tokens,
+      total_tokens: usage.total_tokens,
+      latency_ms: Math.round(latencyMs),
+      tokens_per_second: Math.round(tokensPerSecond * 100) / 100,
+      estimated_local_cost: localCost,
+      estimated_cloud_cost: cloudCost,
+      status_code: statusCode || null,
+      error: error || null
+    });
 
-  // Auto-register model if new
-  const localPricing = config.localModelPricing?.default || {};
-  database.upsertModel({
-    id: model || 'unknown',
-    display_name: model || 'unknown',
-    provider: 'local',
-    is_local: 1,
-    input_price_per_1k: (localPricing.inputPerMillion || 0.02) / 1000,
-    output_price_per_1k: (localPricing.outputPerMillion || 0.10) / 1000,
-    cloud_equivalent: config.defaultCompareModel || 'gpt-4o'
-  });
+    // Auto-register model if new
+    const localPricing = config.localModelPricing?.default || {};
+    database.upsertModel({
+      id: model || 'unknown',
+      display_name: model || 'unknown',
+      provider: 'local',
+      is_local: 1,
+      input_price_per_1k: (localPricing.inputPerMillion || 0.02) / 1000,
+      output_price_per_1k: (localPricing.outputPerMillion || 0.10) / 1000,
+      cloud_equivalent: config.defaultCompareModel || 'gpt-4o'
+    });
+  } catch (e) {
+    console.error('[tracker] Failed to record request:', e.message);
+  }
 
   const savings = cloudCost - localCost;
   console.log(

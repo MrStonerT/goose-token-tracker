@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const tracker = require('./tracker');
 const config = require('../config.json');
 
@@ -6,6 +7,24 @@ const TARGET = config.targetUrl; // e.g. http://YOUR_VLLM_IP:8000
 
 // Paths we track tokens for
 const TRACKED_PATHS = ['/v1/chat/completions', '/v1/completions'];
+
+// Goose resends the whole conversation (including any base64 images) on every
+// turn, so image-heavy sessions need a generous limit.
+const MAX_BODY_SIZE = (config.maxRequestBodyMb || 50) * 1024 * 1024;
+
+/**
+ * Count image parts in an OpenAI-style chat request (for logging only).
+ */
+function countImageParts(requestData) {
+  let count = 0;
+  for (const msg of requestData?.messages || []) {
+    if (!Array.isArray(msg.content)) continue;
+    for (const part of msg.content) {
+      if (part && (part.type === 'image_url' || part.type === 'input_image')) count++;
+    }
+  }
+  return count;
+}
 
 /**
  * Create the reverse proxy request handler.
@@ -22,31 +41,33 @@ function createProxyHandler() {
     const requestPath = req.url; // e.g. /v1/chat/completions or /v1/models
     const shouldTrack = TRACKED_PATHS.some(p => requestPath.startsWith(p));
 
-    // Collect request body (limit to 10MB to prevent memory exhaustion)
-    const MAX_BODY_SIZE = 10 * 1024 * 1024;
+    // Collect request body (capped to prevent memory exhaustion)
     const bodyChunks = [];
     let bodySize = 0;
     let bodySizeLimitExceeded = false;
     req.on('data', chunk => {
+      if (bodySizeLimitExceeded) return;
       bodySize += chunk.length;
       if (bodySize > MAX_BODY_SIZE) {
         bodySizeLimitExceeded = true;
-        req.destroy();
+        bodyChunks.length = 0;
+        console.warn(`[proxy] Rejected request over ${MAX_BODY_SIZE / 1024 / 1024}MB (raise maxRequestBodyMb in config.json)`);
+        res.writeHead(413, { 'Content-Type': 'application/json', 'Connection': 'close' });
+        res.end(JSON.stringify({
+          error: { message: 'Request body too large for proxy', type: 'proxy_error', code: 413 }
+        }), () => req.destroy());
         return;
       }
       bodyChunks.push(chunk);
     });
     req.on('end', () => {
-      if (bodySizeLimitExceeded) {
-        res.writeHead(413, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Request body too large' }));
-        return;
-      }
+      if (bodySizeLimitExceeded) return;
       let bodyBuffer = Buffer.concat(bodyChunks);
       let requestData = null;
       let isStreaming = false;
       let model = 'unknown';
-      let sessionId = req.headers[config.sessionIdHeader] || null;
+      // Goose sends its session ID as agent-session-id
+      let sessionId = req.headers[config.sessionIdHeader] || req.headers['agent-session-id'] || null;
 
       // Parse JSON body if this is a tracked endpoint
       if (shouldTrack && bodyBuffer.length > 0) {
@@ -55,8 +76,14 @@ function createProxyHandler() {
           model = requestData.model || 'unknown';
           isStreaming = requestData.stream === true;
 
-          // Inject stream_options so vLLM reports usage in final SSE chunk
-          if (isStreaming && !requestData.stream_options) {
+          const imageParts = countImageParts(requestData);
+          if (imageParts > 0) {
+            console.log(`[proxy] Forwarding ${imageParts} image part(s) to ${model}`);
+          }
+
+          // Optionally inject stream_options so vLLM reports usage in the final SSE chunk.
+          // Leave caller-provided stream_options untouched.
+          if (isStreaming && config.injectStreamOptionsForUsage !== false && !requestData.stream_options) {
             requestData.stream_options = { include_usage: true };
             bodyBuffer = Buffer.from(JSON.stringify(requestData));
           }
@@ -83,7 +110,8 @@ function createProxyHandler() {
       // Remove proxy-related headers
       delete proxyOpts.headers['x-forwarded-for'];
 
-      const proxyReq = http.request(proxyOpts, (proxyRes) => {
+      const transport = targetUrl.protocol === 'https:' ? https : http;
+      const proxyReq = transport.request(proxyOpts, (proxyRes) => {
         if (!shouldTrack) {
           // Non-tracked endpoint (e.g. /v1/models) — pure passthrough
           res.writeHead(proxyRes.statusCode, proxyRes.headers);

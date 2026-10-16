@@ -1,7 +1,9 @@
 {
   "proxyPort": 4747,
   "targetUrl": "http://localhost:8000",
-  "sessionIdHeader": "x-session-id",
+  "injectStreamOptionsForUsage": true,
+  "sessionIdHeader": "agent-session-id",
+  "maxRequestBodyMb": 50,
   "dbPath": "./data/tracker.db",
   "gooseSessionsDb": "",
   "hardware": {
