@@ -57,7 +57,7 @@ router.get('/stats/sessions', (req, res) => {
 // GET /api/requests?limit=50&offset=0
 router.get('/requests', (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 50, 500);
-  const offset = parseInt(req.query.offset) || 0;
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
   const requests = database.getRecentRequests(limit, offset);
   const total = database.getTotalRequestCount();
   res.json({ requests, total, limit, offset });
@@ -77,13 +77,13 @@ router.get('/requests/group/:groupId', (req, res) => {
 
 // GET /api/trends/hourly
 router.get('/trends/hourly', (req, res) => {
-  const hours = parseInt(req.query.hours) || 24;
+  const hours = Math.min(Math.max(parseInt(req.query.hours) || 24, 1), 24 * 366);
   res.json(database.getHourlyTrend(hours));
 });
 
 // GET /api/trends/daily
 router.get('/trends/daily', (req, res) => {
-  const days = parseInt(req.query.days) || 30;
+  const days = Math.min(Math.max(parseInt(req.query.days) || 30, 1), 3660);
   res.json(database.getDailyTrend(days));
 });
 
@@ -249,9 +249,32 @@ router.post('/settings', (req, res) => {
   // Validate gooseSessionsDb — must end in .db and not contain path traversal
   if (updates.gooseSessionsDb !== undefined && updates.gooseSessionsDb !== '') {
     const dbPath = updates.gooseSessionsDb;
-    if (dbPath.includes('..') || !dbPath.toLowerCase().endsWith('.db')) {
+    if (typeof dbPath !== 'string' || dbPath.includes('..') || !dbPath.toLowerCase().endsWith('.db')) {
       return res.status(400).json({ error: 'Invalid database path' });
     }
+  }
+
+  // Validate numeric settings — config.json is rewritten from these, so reject
+  // anything that isn't a plain object of finite, non-negative numbers/strings.
+  const isNum = v => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+  if (updates.hardware !== undefined) {
+    const hw = updates.hardware;
+    if (!hw || typeof hw !== 'object' || Array.isArray(hw) ||
+        Object.entries(hw).some(([k, v]) => k === 'name' ? typeof v !== 'string' || v.length > 100 : !isNum(v))) {
+      return res.status(400).json({ error: 'Invalid hardware settings' });
+    }
+  }
+  if (updates.localModelPricing !== undefined) {
+    const lp = updates.localModelPricing;
+    if (!lp || typeof lp !== 'object' || Array.isArray(lp) ||
+        Object.values(lp).some(p => !p || typeof p !== 'object' ||
+          !isNum(p.inputPerMillion) || !isNum(p.outputPerMillion))) {
+      return res.status(400).json({ error: 'Invalid local pricing' });
+    }
+  }
+  if (updates.defaultCompareModel !== undefined &&
+      !Object.prototype.hasOwnProperty.call(config.cloudComparisonModels || {}, updates.defaultCompareModel)) {
+    return res.status(400).json({ error: 'Unknown comparison model' });
   }
 
   // Only allow specific fields to be updated

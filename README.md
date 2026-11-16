@@ -50,7 +50,7 @@ Running local LLMs is incredibly cost-effective — but you get **zero observabi
 | Tokens/second speed | No | Yes |
 | Streaming support | No tracking | Full SSE tap |
 | Local cost calculation | No | Per-token pricing |
-| Cloud cost comparison | No | 29 models |
+| Cloud cost comparison | No | 46 models |
 | vLLM engine metrics | No | KV cache, TTFT, queue, memory |
 | Chat name / session grouping | Yes (names only) | Yes (merged with Goose data) |
 | Request-level detail | No | Full log with pagination |
@@ -62,7 +62,7 @@ Running local LLMs is incredibly cost-effective — but you get **zero observabi
 ## What You Get
 
 - **Real-time token counting** for every request (input + output), read directly from vLLM's response (not estimated)
-- **Cost comparison** against 26 cloud models (GPT-5.2, Claude Opus 4.6, Gemini 3.1 Pro, Grok 4, DeepSeek R1, etc.)
+- **Cost comparison** against 46 cloud models (GPT-6, Claude Opus 5.5, Gemini 4, Grok 4.7, DeepSeek V4, etc.)
 - **Live vLLM engine metrics** (KV cache, prefix cache hit rate, TTFT, queue depth, memory)
 - **Chat Analytics** — see token usage, cost, and savings per Goose chat session with actual chat names
 - **Goose Lifetime Stats** — total tokens across all sessions, as reported by Goose
@@ -221,45 +221,64 @@ The dashboard at `http://localhost:4747` provides:
 | `hardware.gpuWatts` | GPU power draw in watts | `125` |
 | `hardware.electricityCostPerKwh` | Your electricity rate | `0.12` |
 | `localModelPricing.default` | Flat per-token local cost | `$0.02/M in, $0.10/M out` |
-| `cloudComparisonModels` | Cloud models for cost comparison | 29 models included |
-| `defaultCompareModel` | Default model for savings calculation | `claude-sonnet-4.6` |
+| `cloudComparisonModels` | Cloud models for cost comparison | 46 models included |
+| `defaultCompareModel` | Default model for savings calculation | `claude-sonnet-5.5` |
 | `dashboardCompareModels` | Models shown by default in cost table | 5 models |
 
 All settings can also be changed from the dashboard's Settings page.
 
-### Cloud Models Included (29 models, March 2026 pricing)
+### Cloud Models Included (46 models, November 2026 pricing)
+
+Standard-tier list prices per million tokens (short-context tier where a provider charges more for long prompts). DeepSeek rates are off-peak; its weekday peak hours cost 2x. Gemini 4 Carbon/Argon are scheduled to double to $4.00 / $20.00 on 2026-12-01.
 
 | Model | Input $/M | Output $/M |
 |-------|-----------|------------|
-| GPT-5.2 | $1.75 | $14.00 |
-| GPT-5 | $1.25 | $10.00 |
-| GPT-4.1 | $2.00 | $8.00 |
-| GPT-4.1 Mini | $0.40 | $1.60 |
-| GPT-4.1 Nano | $0.10 | $0.40 |
-| GPT-4o | $2.50 | $10.00 |
-| GPT-4o Mini | $0.15 | $0.60 |
-| o3 | $2.00 | $8.00 |
-| o3 Mini | $1.10 | $4.40 |
-| o4 Mini | $1.10 | $4.40 |
-| Claude Opus 4.6 | $5.00 | $25.00 |
-| Claude Opus 4.5 | $5.00 | $25.00 |
-| Claude Opus 4.1 | $15.00 | $75.00 |
-| Claude Opus 4 | $15.00 | $75.00 |
-| Claude Sonnet 4.6 | $3.00 | $15.00 |
-| Claude Sonnet 4.5 | $3.00 | $15.00 |
-| Claude Sonnet 4 | $3.00 | $15.00 |
-| Claude Haiku 4.5 | $1.00 | $5.00 |
-| Claude Haiku 3.5 | $0.80 | $4.00 |
-| Gemini 3.1 Pro | $2.00 | $12.00 |
-| Gemini 3 Flash | $0.50 | $3.00 |
-| Gemini 2.5 Pro | $1.25 | $10.00 |
-| Gemini 2.5 Flash | $0.30 | $2.50 |
-| Grok 4 | $3.00 | $15.00 |
-| Grok 4.1 Fast | $0.20 | $0.50 |
-| DeepSeek V3 | $0.28 | $0.42 |
-| DeepSeek R1 | $0.55 | $2.19 |
-| Mistral Large 3 | $0.50 | $1.50 |
-| Llama 4 Maverick | $0.15 | $0.60 |
+| `gpt-6-astra` | $10.00 | $50.00 |
+| `gpt-6.1-sol` | $2.00 | $10.00 |
+| `gpt-6.1-terra` | $1.00 | $5.00 |
+| `gpt-6-luna` | $0.10 | $0.50 |
+| `gpt-5.6-sol` | $4.00 | $20.00 |
+| `gpt-5.6-terra` | $2.00 | $12.00 |
+| `gpt-5.6-luna` | $0.20 | $1.20 |
+| `gpt-5.5` | $5.00 | $30.00 |
+| `gpt-5.4` | $2.50 | $15.00 |
+| `gpt-5.4-mini` | $0.75 | $4.50 |
+| `gpt-5.3-codex` | $1.75 | $14.00 |
+| `gpt-5.2` | $1.75 | $14.00 |
+| `gpt-5` | $1.25 | $10.00 |
+| `gpt-5-mini` | $0.25 | $2.00 |
+| `gpt-4.1` | $2.00 | $8.00 |
+| `gpt-4.1-mini` | $0.40 | $1.60 |
+| `gpt-4o` | $2.50 | $10.00 |
+| `gpt-4o-mini` | $0.15 | $0.60 |
+| `o3` | $2.00 | $8.00 |
+| `claude-fable-5.2` | $8.00 | $40.00 |
+| `claude-opus-5.5` | $4.00 | $20.00 |
+| `claude-opus-5` | $5.00 | $25.00 |
+| `claude-opus-4.8` | $5.00 | $25.00 |
+| `claude-opus-4.6` | $5.00 | $25.00 |
+| `claude-sonnet-5.5` | $2.00 | $10.00 |
+| `claude-sonnet-5` | $2.00 | $10.00 |
+| `claude-sonnet-4.6` | $3.00 | $15.00 |
+| `claude-haiku-5.5` | $0.10 | $0.50 |
+| `claude-haiku-4.5` | $1.00 | $5.00 |
+| `gemini-4-carbon` | $2.00 | $10.00 |
+| `gemini-4-argon` | $2.00 | $10.00 |
+| `gemini-4-hydrogen` | $1.50 | $7.50 |
+| `gemini-3.8-flash` | $0.75 | $3.75 |
+| `gemini-3.5-flash-lite` | $0.30 | $2.50 |
+| `gemini-3.1-pro` | $2.00 | $12.00 |
+| `gemini-3.1-flash-lite` | $0.25 | $1.50 |
+| `gemini-3-flash` | $0.50 | $3.00 |
+| `gemini-2.5-pro` | $1.25 | $10.00 |
+| `gemini-2.5-flash` | $0.30 | $2.50 |
+| `grok-4.7` | $2.00 | $6.00 |
+| `grok-4.3` | $1.25 | $2.50 |
+| `grok-build-0.1` | $1.00 | $2.00 |
+| `deepseek-v4-pro` | $0.66 | $1.98 |
+| `deepseek-flash` | $0.15 | $0.60 |
+| `mistral-large-3` | $0.50 | $1.50 |
+| `llama-4-maverick` | $0.15 | $0.60 |
 
 ## Windows Auto-Start
 
