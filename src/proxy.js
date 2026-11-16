@@ -107,8 +107,13 @@ function createProxyHandler() {
         }
       };
 
-      // Remove proxy-related headers
-      delete proxyOpts.headers['x-forwarded-for'];
+      // Remove proxy-related and hop-by-hop headers. The body is re-sent with
+      // an explicit content-length, so forwarding the client's
+      // transfer-encoding alongside it would send conflicting framing upstream.
+      for (const h of ['x-forwarded-for', 'connection', 'keep-alive', 'proxy-authorization',
+                       'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade']) {
+        delete proxyOpts.headers[h];
+      }
 
       const transport = targetUrl.protocol === 'https:' ? https : http;
       const proxyReq = transport.request(proxyOpts, (proxyRes) => {

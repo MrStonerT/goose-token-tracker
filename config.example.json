@@ -18,129 +18,197 @@
     }
   },
   "cloudComparisonModels": {
+    "gpt-6-astra": {
+      "inputPerMillion": 10,
+      "outputPerMillion": 50
+    },
+    "gpt-6.1-sol": {
+      "inputPerMillion": 2,
+      "outputPerMillion": 10
+    },
+    "gpt-6.1-terra": {
+      "inputPerMillion": 1,
+      "outputPerMillion": 5
+    },
+    "gpt-6-luna": {
+      "inputPerMillion": 0.1,
+      "outputPerMillion": 0.5
+    },
+    "gpt-5.6-sol": {
+      "inputPerMillion": 4,
+      "outputPerMillion": 20
+    },
+    "gpt-5.6-terra": {
+      "inputPerMillion": 2,
+      "outputPerMillion": 12
+    },
+    "gpt-5.6-luna": {
+      "inputPerMillion": 0.2,
+      "outputPerMillion": 1.2
+    },
+    "gpt-5.5": {
+      "inputPerMillion": 5,
+      "outputPerMillion": 30
+    },
+    "gpt-5.4": {
+      "inputPerMillion": 2.5,
+      "outputPerMillion": 15
+    },
+    "gpt-5.4-mini": {
+      "inputPerMillion": 0.75,
+      "outputPerMillion": 4.5
+    },
+    "gpt-5.3-codex": {
+      "inputPerMillion": 1.75,
+      "outputPerMillion": 14
+    },
     "gpt-5.2": {
       "inputPerMillion": 1.75,
-      "outputPerMillion": 14.00
+      "outputPerMillion": 14
     },
     "gpt-5": {
       "inputPerMillion": 1.25,
-      "outputPerMillion": 10.00
+      "outputPerMillion": 10
+    },
+    "gpt-5-mini": {
+      "inputPerMillion": 0.25,
+      "outputPerMillion": 2
     },
     "gpt-4.1": {
-      "inputPerMillion": 2.00,
-      "outputPerMillion": 8.00
+      "inputPerMillion": 2,
+      "outputPerMillion": 8
     },
     "gpt-4.1-mini": {
-      "inputPerMillion": 0.40,
-      "outputPerMillion": 1.60
-    },
-    "gpt-4.1-nano": {
-      "inputPerMillion": 0.10,
-      "outputPerMillion": 0.40
+      "inputPerMillion": 0.4,
+      "outputPerMillion": 1.6
     },
     "gpt-4o": {
-      "inputPerMillion": 2.50,
-      "outputPerMillion": 10.00
+      "inputPerMillion": 2.5,
+      "outputPerMillion": 10
     },
     "gpt-4o-mini": {
       "inputPerMillion": 0.15,
-      "outputPerMillion": 0.60
+      "outputPerMillion": 0.6
     },
     "o3": {
-      "inputPerMillion": 2.00,
-      "outputPerMillion": 8.00
+      "inputPerMillion": 2,
+      "outputPerMillion": 8
     },
-    "o3-mini": {
-      "inputPerMillion": 1.10,
-      "outputPerMillion": 4.40
+    "claude-fable-5.2": {
+      "inputPerMillion": 8,
+      "outputPerMillion": 40
     },
-    "o4-mini": {
-      "inputPerMillion": 1.10,
-      "outputPerMillion": 4.40
+    "claude-opus-5.5": {
+      "inputPerMillion": 4,
+      "outputPerMillion": 20
+    },
+    "claude-opus-5": {
+      "inputPerMillion": 5,
+      "outputPerMillion": 25
+    },
+    "claude-opus-4.8": {
+      "inputPerMillion": 5,
+      "outputPerMillion": 25
     },
     "claude-opus-4.6": {
-      "inputPerMillion": 5.00,
-      "outputPerMillion": 25.00
+      "inputPerMillion": 5,
+      "outputPerMillion": 25
     },
-    "claude-opus-4.5": {
-      "inputPerMillion": 5.00,
-      "outputPerMillion": 25.00
+    "claude-sonnet-5.5": {
+      "inputPerMillion": 2,
+      "outputPerMillion": 10
     },
-    "claude-opus-4.1": {
-      "inputPerMillion": 15.00,
-      "outputPerMillion": 75.00
-    },
-    "claude-opus-4": {
-      "inputPerMillion": 15.00,
-      "outputPerMillion": 75.00
+    "claude-sonnet-5": {
+      "inputPerMillion": 2,
+      "outputPerMillion": 10
     },
     "claude-sonnet-4.6": {
-      "inputPerMillion": 3.00,
-      "outputPerMillion": 15.00
+      "inputPerMillion": 3,
+      "outputPerMillion": 15
     },
-    "claude-sonnet-4.5": {
-      "inputPerMillion": 3.00,
-      "outputPerMillion": 15.00
-    },
-    "claude-sonnet-4": {
-      "inputPerMillion": 3.00,
-      "outputPerMillion": 15.00
+    "claude-haiku-5.5": {
+      "inputPerMillion": 0.1,
+      "outputPerMillion": 0.5
     },
     "claude-haiku-4.5": {
-      "inputPerMillion": 1.00,
-      "outputPerMillion": 5.00
+      "inputPerMillion": 1,
+      "outputPerMillion": 5
     },
-    "claude-haiku-3.5": {
-      "inputPerMillion": 0.80,
-      "outputPerMillion": 4.00
+    "gemini-4-carbon": {
+      "inputPerMillion": 2,
+      "outputPerMillion": 10
+    },
+    "gemini-4-argon": {
+      "inputPerMillion": 2,
+      "outputPerMillion": 10
+    },
+    "gemini-4-hydrogen": {
+      "inputPerMillion": 1.5,
+      "outputPerMillion": 7.5
+    },
+    "gemini-3.8-flash": {
+      "inputPerMillion": 0.75,
+      "outputPerMillion": 3.75
+    },
+    "gemini-3.5-flash-lite": {
+      "inputPerMillion": 0.3,
+      "outputPerMillion": 2.5
     },
     "gemini-3.1-pro": {
-      "inputPerMillion": 2.00,
-      "outputPerMillion": 12.00
+      "inputPerMillion": 2,
+      "outputPerMillion": 12
+    },
+    "gemini-3.1-flash-lite": {
+      "inputPerMillion": 0.25,
+      "outputPerMillion": 1.5
     },
     "gemini-3-flash": {
-      "inputPerMillion": 0.50,
-      "outputPerMillion": 3.00
+      "inputPerMillion": 0.5,
+      "outputPerMillion": 3
     },
     "gemini-2.5-pro": {
       "inputPerMillion": 1.25,
-      "outputPerMillion": 10.00
+      "outputPerMillion": 10
     },
     "gemini-2.5-flash": {
-      "inputPerMillion": 0.30,
-      "outputPerMillion": 2.50
+      "inputPerMillion": 0.3,
+      "outputPerMillion": 2.5
     },
-    "grok-4": {
-      "inputPerMillion": 3.00,
-      "outputPerMillion": 15.00
+    "grok-4.7": {
+      "inputPerMillion": 2,
+      "outputPerMillion": 6
     },
-    "grok-4.1-fast": {
-      "inputPerMillion": 0.20,
-      "outputPerMillion": 0.50
+    "grok-4.3": {
+      "inputPerMillion": 1.25,
+      "outputPerMillion": 2.5
     },
-    "deepseek-v3": {
-      "inputPerMillion": 0.28,
-      "outputPerMillion": 0.42
+    "grok-build-0.1": {
+      "inputPerMillion": 1,
+      "outputPerMillion": 2
     },
-    "deepseek-r1": {
-      "inputPerMillion": 0.55,
-      "outputPerMillion": 2.19
+    "deepseek-v4-pro": {
+      "inputPerMillion": 0.66,
+      "outputPerMillion": 1.98
+    },
+    "deepseek-flash": {
+      "inputPerMillion": 0.15,
+      "outputPerMillion": 0.6
     },
     "mistral-large-3": {
-      "inputPerMillion": 0.50,
-      "outputPerMillion": 1.50
+      "inputPerMillion": 0.5,
+      "outputPerMillion": 1.5
     },
     "llama-4-maverick": {
       "inputPerMillion": 0.15,
-      "outputPerMillion": 0.60
+      "outputPerMillion": 0.6
     }
   },
-  "defaultCompareModel": "claude-sonnet-4.6",
+  "defaultCompareModel": "claude-sonnet-5.5",
   "dashboardCompareModels": [
-    "gpt-5",
-    "gpt-4.1",
-    "claude-opus-4.6",
-    "claude-sonnet-4",
-    "gemini-2.5-pro"
+    "gpt-6.1-sol",
+    "claude-opus-5.5",
+    "claude-sonnet-5.5",
+    "gemini-4-argon",
+    "deepseek-v4-pro"
   ]
 }

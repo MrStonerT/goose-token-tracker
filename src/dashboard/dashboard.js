@@ -74,7 +74,7 @@ function renderModelCheckboxes() {
   const container = document.getElementById('model-checkboxes');
   container.innerHTML = allCloudModels.map(m => {
     const checked = selectedCompareModels.includes(m.id);
-    return `<label class="${checked ? 'checked' : ''}" data-model="${m.id}">${m.id}</label>`;
+    return `<label class="${checked ? 'checked' : ''}" data-model="${esc(m.id)}">${esc(m.id)}</label>`;
   }).join('');
 
   // Use mousedown instead of click to avoid label/checkbox double-fire
@@ -272,7 +272,7 @@ async function updateCostComparison() {
   const modelHeaders = selectedCompareModels.map(m => {
     const p = pricingLookup[m];
     const sub = p ? `<div class="cost-col-pricing">$${p.inputPerMillion} in / $${p.outputPerMillion} out</div>` : '';
-    return `<th class="cost-model-col"><div>${m}</div>${sub}</th>`;
+    return `<th class="cost-model-col"><div>${esc(m)}</div>${sub}</th>`;
   }).join('');
 
   const colCount = 5 + selectedCompareModels.length;
@@ -500,7 +500,7 @@ async function updateHealth() {
     if (health.vllm_status === 'connected') {
       el.innerHTML = `<span class="status-dot connected"></span> ${t('status.connected')}`;
     } else {
-      el.innerHTML = `<span class="status-dot error"></span> vLLM ${health.vllm_status}`;
+      el.innerHTML = `<span class="status-dot error"></span> vLLM ${esc(health.vllm_status)}`;
     }
 
     const mins = Math.floor(health.uptime_seconds / 60);
@@ -813,9 +813,9 @@ function renderChatTiles(chats) {
     const untrackedCls = c.goose_only ? ' untracked' : '';
     const project = projectName(c.working_dir);
 
-    return `<div class="chat-tile${untrackedCls}" onclick="openChatDetail('${esc(c.session_id)}')">
+    return `<div class="chat-tile${untrackedCls}" data-sid="${esc(c.session_id)}" onclick="openChatDetail(this.dataset.sid)">
       <div class="chat-tile-name" title="${esc(c.name)}">${esc(c.name)}</div>
-      ${project ? `<div class="chat-tile-project" title="${esc(c.working_dir)}">${project}</div>` : '<div class="chat-tile-project">—</div>'}
+      ${project ? `<div class="chat-tile-project" title="${esc(c.working_dir)}">${esc(project)}</div>` : '<div class="chat-tile-project">—</div>'}
       <div class="chat-tile-stats">
         <div class="chat-tile-stat">
           <span class="chat-tile-stat-label">${t('chat.input')}</span>
@@ -955,7 +955,7 @@ function renderProjectView(chats) {
     // Build the expanded chat table (hidden by default)
     const chatRows = sortedChats.map(c => {
       const cSavings = c.savings || 0;
-      return `<tr class="project-detail-row" onclick="event.stopPropagation(); openChatDetail('${esc(c.session_id)}')">
+      return `<tr class="project-detail-row" data-sid="${esc(c.session_id)}" onclick="event.stopPropagation(); openChatDetail(this.dataset.sid)">
         <td><strong>${esc(c.name)}</strong></td>
         <td>${fmt(c.total_prompt_tokens)}</td>
         <td>${fmt(c.total_completion_tokens)}</td>
@@ -1034,9 +1034,9 @@ function renderChatTable(chats) {
     const savings = c.savings || 0;
     const cls = savings >= 0 ? 'savings-positive' : '';
     const project = projectName(c.working_dir);
-    return `<tr style="cursor:pointer" onclick="openChatDetail('${esc(c.session_id)}')">
+    return `<tr style="cursor:pointer" data-sid="${esc(c.session_id)}" onclick="openChatDetail(this.dataset.sid)">
       <td><strong>${esc(c.name)}</strong></td>
-      <td style="color:var(--accent);font-size:12px">${project}</td>
+      <td style="color:var(--accent);font-size:12px">${esc(project)}</td>
       <td>${c.request_count}</td>
       <td>${fmt(c.total_prompt_tokens)}</td>
       <td>${fmt(c.total_completion_tokens)}</td>
@@ -1074,8 +1074,8 @@ window.openChatDetail = async function(sessionId) {
 
   let html = `
     <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">
-      ${project ? `<span style="color:var(--accent)">${project}</span> &middot; ` : ''}
-      ${data.provider || ''} &middot; ${data.goose_mode || ''} mode &middot;
+      ${project ? `<span style="color:var(--accent)">${esc(project)}</span> &middot; ` : ''}
+      ${esc(data.provider)} &middot; ${esc(data.goose_mode)} mode &middot;
       ${data.message_count} ${t('chat.messages')} &middot; ${t('chat.created')} ${fmtDateTime(data.created_at)}
     </div>
     ${gooseOnlyNote}
@@ -1123,7 +1123,7 @@ window.openChatDetail = async function(sessionId) {
       if (cost === undefined) continue;
       const save = cost - data.local_cost;
       html += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px">
-        <div style="color:var(--text-dim)">${model}</div>
+        <div style="color:var(--text-dim)">${esc(model)}</div>
         <div style="color:var(--text-bright);font-weight:600">${fmtCost(cost)}</div>
         <div style="color:var(--green);font-size:11px">${t('chat.save', { amount: fmtCost(save) })}</div>
       </div>`;
