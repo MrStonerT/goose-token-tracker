@@ -186,6 +186,7 @@
         avgLatency:     '{ms}ms avg latency',
         pricingLabel:   '${inPrice}/M in, ${outPrice}/M out',
         vsModel:        'vs {model}',
+        vsModels:       'vs {models} (priced at the time)',
         savingsPct:     '{pct}% savings vs cloud',
       },
       badge: {
@@ -423,6 +424,7 @@
         avgLatency:     '{ms}ms latencia prom.',
         pricingLabel:   '${inPrice}/M entr., ${outPrice}/M sal.',
         vsModel:        'vs {model}',
+        vsModels:       'vs {models} (precio de cada momento)',
         savingsPct:     '{pct}% de ahorro vs nube',
       },
       badge: {

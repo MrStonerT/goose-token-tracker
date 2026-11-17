@@ -1,5 +1,26 @@
 const database = require('./database');
 const config = require('../config.json');
+const pricing = require('./pricing');
+
+// Estimates prompt-cache hits for the cloud comparison (see pricing.js)
+const cacheEstimator = new pricing.CacheEstimator();
+
+/**
+ * Estimated cached prompt tokens for a request that started at startMs.
+ * After a restart, warms the stream from the database first.
+ */
+function estimateCachedTokens(sessionId, startMs, promptTokens, completionTokens) {
+  const key = sessionId || '';
+  if (!cacheEstimator.has(key)) {
+    try {
+      for (const r of database.getRecentSessionRequests(sessionId || null)) {
+        cacheEstimator.observe(key, database.parseUtc(r.timestamp) - (r.latency_ms || 0),
+          r.prompt_tokens, r.completion_tokens);
+      }
+    } catch (e) { /* estimate without history */ }
+  }
+  return promptTokens > 0 ? cacheEstimator.observe(key, startMs, promptTokens, completionTokens) : 0;
+}
 
 /**
  * Extract usage from a non-streaming vLLM response.
@@ -64,8 +85,12 @@ function extractUsageFromStreamChunks(chunks) {
  * Default: $0.02 per million input tokens, $0.10 per million output tokens.
  * This accounts for hardware amortization, not just electricity.
  */
+function getLocalPricing() {
+  return config.localModelPricing?.default || { inputPerMillion: 0.02, outputPerMillion: 0.10 };
+}
+
 function computeLocalCost(promptTokens, completionTokens) {
-  const pricing = config.localModelPricing?.default || { inputPerMillion: 0.02, outputPerMillion: 0.10 };
+  const pricing = getLocalPricing();
   const inputCost = (promptTokens / 1_000_000) * pricing.inputPerMillion;
   const outputCost = (completionTokens / 1_000_000) * pricing.outputPerMillion;
   return inputCost + outputCost;
@@ -82,12 +107,19 @@ function computeElectricityCost(latencyMs) {
 }
 
 /**
- * Compute cloud cost for the default comparison model.
+ * The default comparison model. Totals over many requests (computeCloudCost,
+ * computeAllCloudCosts) can't know cache hits, so they price all input at the
+ * full rate; per-request costs in record() and sumAllCloudCosts() include
+ * caching.
  */
+function getDefaultCloudPricing() {
+  const models = config.cloudComparisonModels || {};
+  const id = models[config.defaultCompareModel] ? config.defaultCompareModel : Object.keys(models)[0];
+  return id ? { id, ...models[id] } : null;
+}
+
 function computeCloudCost(promptTokens, completionTokens) {
-  const models = config.cloudComparisonModels;
-  const defaultModel = config.defaultCompareModel || 'gpt-4o';
-  const compareModel = models[defaultModel] || models[Object.keys(models)[0]];
+  const compareModel = getDefaultCloudPricing();
   if (!compareModel) return 0;
 
   const inputCost = (promptTokens / 1_000_000) * compareModel.inputPerMillion;
@@ -121,8 +153,16 @@ function computeTokensPerSecond(completionTokens, latencyMs) {
  */
 function record({ sessionId, model, requestPath, isStreaming, usage, latencyMs, statusCode, error }) {
   const tokensPerSecond = computeTokensPerSecond(usage.completion_tokens, latencyMs);
+  const localPricing = getLocalPricing();
+  const cloudPricing = getDefaultCloudPricing();
   const localCost = computeLocalCost(usage.prompt_tokens, usage.completion_tokens);
-  const cloudCost = computeCloudCost(usage.prompt_tokens, usage.completion_tokens);
+  const cachedTokens = estimateCachedTokens(sessionId, Date.now() - latencyMs,
+    usage.prompt_tokens, usage.completion_tokens);
+  const cloudCostNoCache = computeCloudCost(usage.prompt_tokens, usage.completion_tokens);
+  const cloud = cloudPricing
+    ? pricing.requestCost(cloudPricing, usage.prompt_tokens, usage.completion_tokens, cachedTokens)
+    : null;
+  const cloudCost = cloud ? cloud.total : 0;
   const electricityCost = computeElectricityCost(latencyMs);
 
   // A tracking failure must never take down the proxy
@@ -139,12 +179,21 @@ function record({ sessionId, model, requestPath, isStreaming, usage, latencyMs, 
       tokens_per_second: Math.round(tokensPerSecond * 100) / 100,
       estimated_local_cost: localCost,
       estimated_cloud_cost: cloudCost,
+      // Prices this request was costed at, kept so later price changes
+      // never rewrite history
+      cloud_model: cloudPricing ? cloudPricing.id : null,
+      cloud_input_per_million: cloud ? cloud.rates.input : null,
+      cloud_cached_input_per_million: cloud ? cloud.rates.cachedInput : null,
+      cloud_output_per_million: cloud ? cloud.rates.output : null,
+      cached_tokens: cachedTokens,
+      estimated_cloud_cost_no_cache: cloudCostNoCache,
+      local_input_per_million: localPricing.inputPerMillion,
+      local_output_per_million: localPricing.outputPerMillion,
       status_code: statusCode || null,
       error: error || null
     });
 
     // Auto-register model if new
-    const localPricing = config.localModelPricing?.default || {};
     database.upsertModel({
       id: model || 'unknown',
       display_name: model || 'unknown',
@@ -160,7 +209,7 @@ function record({ sessionId, model, requestPath, isStreaming, usage, latencyMs, 
 
   const savings = cloudCost - localCost;
   console.log(
-    `[tracker] ${model} | in:${usage.prompt_tokens} out:${usage.completion_tokens} | ` +
+    `[tracker] ${model} | in:${usage.prompt_tokens} (cloud-cached:${cachedTokens}) out:${usage.completion_tokens} | ` +
     `${tokensPerSecond.toFixed(1)} tok/s | ${latencyMs.toFixed(0)}ms | ` +
     `local:$${localCost.toFixed(6)} cloud:$${cloudCost.toFixed(4)} saved:$${savings.toFixed(4)} ` +
     `electricity:$${electricityCost.toFixed(8)}`
@@ -189,7 +238,8 @@ function getCloudModelList() {
   return Object.entries(config.cloudComparisonModels).map(([id, pricing]) => ({
     id,
     inputPerMillion: pricing.inputPerMillion,
-    outputPerMillion: pricing.outputPerMillion
+    outputPerMillion: pricing.outputPerMillion,
+    cachedInputPerMillion: pricing.cachedInputPerMillion
   }));
 }
 
@@ -207,6 +257,7 @@ module.exports = {
   computeElectricityCost,
   computeCloudCost,
   computeAllCloudCosts,
+  sumAllCloudCosts: pricing.sumAllCloudCosts,
   computeTokensPerSecond,
   record,
   addLiveListener,

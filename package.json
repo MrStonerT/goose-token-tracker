@@ -1,6 +1,6 @@
 {
   "name": "goose-token-tracker",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Reverse proxy for tracking token usage between Goose and local vLLM server",
   "main": "server.js",
   "scripts": {

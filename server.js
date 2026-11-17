@@ -82,7 +82,7 @@ app.get('*', (req, res) => {
 const server = app.listen(config.proxyPort, '127.0.0.1', () => {
   console.log('');
   console.log('='.repeat(60));
-  console.log('  Goose Token Tracker v2.1');
+  console.log('  Goose Token Tracker v2.2');
   console.log('='.repeat(60));
   console.log(`  Proxy:      http://localhost:${config.proxyPort}/v1/*`);
   console.log(`  Forwarding: ${config.targetUrl}`);

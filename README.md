@@ -192,7 +192,8 @@ The dashboard at `http://localhost:4747` provides:
 
 ### Cost Comparison
 - Side-by-side cost table: your local cost vs any combination of cloud models
-- Checkbox model selector with 16 pre-configured models
+- Checkbox model selector with 46 pre-configured models
+- Every request is priced individually, with prompt caching and long-prompt rates
 - Per-model and total savings calculations
 
 ### Request Log
@@ -222,63 +223,64 @@ The dashboard at `http://localhost:4747` provides:
 | `hardware.electricityCostPerKwh` | Your electricity rate | `0.12` |
 | `localModelPricing.default` | Flat per-token local cost | `$0.02/M in, $0.10/M out` |
 | `cloudComparisonModels` | Cloud models for cost comparison | 46 models included |
-| `defaultCompareModel` | Default model for savings calculation | `claude-sonnet-5.5` |
+| `defaultCompareModel` | Default model for savings calculation (applies to new requests; past requests keep the model they were priced at) | `claude-sonnet-5.5` |
+| `promptCacheTtlMinutes` | How long a cloud provider keeps a prompt cached, for the cloud cost estimate | `5` |
 | `dashboardCompareModels` | Models shown by default in cost table | 5 models |
 
 All settings can also be changed from the dashboard's Settings page.
 
 ### Cloud Models Included (46 models, November 2026 pricing)
 
-Standard-tier list prices per million tokens (short-context tier where a provider charges more for long prompts). DeepSeek rates are off-peak; its weekday peak hours cost 2x. Gemini 4 Carbon/Argon are scheduled to double to $4.00 / $20.00 on 2026-12-01.
+Standard-tier list prices per million tokens. "Cached input" is the price for prompt tokens served from the provider's prompt cache; "Cache write" is Anthropic's 1.25x charge for new input written to the cache (— means the model has no cache discount or no write charge). Where a provider charges more for long prompts, the higher rate card is shown in brackets and applied per request. Cached rates for Anthropic models, `gpt-6-astra`, `gpt-6.1-sol`, `gpt-5.6-sol`, `gemini-4-argon` and `grok-4.7` are published rates; the rest use that provider's usual cache discount and are approximate. DeepSeek rates are off-peak; its weekday peak hours cost 2x. Gemini 4 Carbon/Argon are scheduled to double to $4.00 / $20.00 on 2026-12-01.
 
-| Model | Input $/M | Output $/M |
-|-------|-----------|------------|
-| `gpt-6-astra` | $10.00 | $50.00 |
-| `gpt-6.1-sol` | $2.00 | $10.00 |
-| `gpt-6.1-terra` | $1.00 | $5.00 |
-| `gpt-6-luna` | $0.10 | $0.50 |
-| `gpt-5.6-sol` | $4.00 | $20.00 |
-| `gpt-5.6-terra` | $2.00 | $12.00 |
-| `gpt-5.6-luna` | $0.20 | $1.20 |
-| `gpt-5.5` | $5.00 | $30.00 |
-| `gpt-5.4` | $2.50 | $15.00 |
-| `gpt-5.4-mini` | $0.75 | $4.50 |
-| `gpt-5.3-codex` | $1.75 | $14.00 |
-| `gpt-5.2` | $1.75 | $14.00 |
-| `gpt-5` | $1.25 | $10.00 |
-| `gpt-5-mini` | $0.25 | $2.00 |
-| `gpt-4.1` | $2.00 | $8.00 |
-| `gpt-4.1-mini` | $0.40 | $1.60 |
-| `gpt-4o` | $2.50 | $10.00 |
-| `gpt-4o-mini` | $0.15 | $0.60 |
-| `o3` | $2.00 | $8.00 |
-| `claude-fable-5.2` | $8.00 | $40.00 |
-| `claude-opus-5.5` | $4.00 | $20.00 |
-| `claude-opus-5` | $5.00 | $25.00 |
-| `claude-opus-4.8` | $5.00 | $25.00 |
-| `claude-opus-4.6` | $5.00 | $25.00 |
-| `claude-sonnet-5.5` | $2.00 | $10.00 |
-| `claude-sonnet-5` | $2.00 | $10.00 |
-| `claude-sonnet-4.6` | $3.00 | $15.00 |
-| `claude-haiku-5.5` | $0.10 | $0.50 |
-| `claude-haiku-4.5` | $1.00 | $5.00 |
-| `gemini-4-carbon` | $2.00 | $10.00 |
-| `gemini-4-argon` | $2.00 | $10.00 |
-| `gemini-4-hydrogen` | $1.50 | $7.50 |
-| `gemini-3.8-flash` | $0.75 | $3.75 |
-| `gemini-3.5-flash-lite` | $0.30 | $2.50 |
-| `gemini-3.1-pro` | $2.00 | $12.00 |
-| `gemini-3.1-flash-lite` | $0.25 | $1.50 |
-| `gemini-3-flash` | $0.50 | $3.00 |
-| `gemini-2.5-pro` | $1.25 | $10.00 |
-| `gemini-2.5-flash` | $0.30 | $2.50 |
-| `grok-4.7` | $2.00 | $6.00 |
-| `grok-4.3` | $1.25 | $2.50 |
-| `grok-build-0.1` | $1.00 | $2.00 |
-| `deepseek-v4-pro` | $0.66 | $1.98 |
-| `deepseek-flash` | $0.15 | $0.60 |
-| `mistral-large-3` | $0.50 | $1.50 |
-| `llama-4-maverick` | $0.15 | $0.60 |
+| Model | Input $/M | Cached input $/M | Cache write $/M | Output $/M |
+|-------|-----------|------------------|-----------------|------------|
+| `gpt-6-astra` | $10.00 | $1.00 | — | $50.00 |
+| `gpt-6.1-sol` | $2.00 | $0.10 | — | $10.00 |
+| `gpt-6.1-terra` | $1.00 | $0.05 | — | $5.00 |
+| `gpt-6-luna` | $0.10 | $0.01 | — | $0.50 |
+| `gpt-5.6-sol` | $4.00 | $0.40 | — | $20.00 |
+| `gpt-5.6-terra` | $2.00 | $0.20 | — | $12.00 |
+| `gpt-5.6-luna` | $0.20 | $0.02 | — | $1.20 |
+| `gpt-5.5` | $5.00 | $0.50 | — | $30.00 |
+| `gpt-5.4` | $2.50 | $0.25 | — | $15.00 |
+| `gpt-5.4-mini` | $0.75 | $0.075 | — | $4.50 |
+| `gpt-5.3-codex` | $1.75 | $0.175 | — | $14.00 |
+| `gpt-5.2` | $1.75 | $0.175 | — | $14.00 |
+| `gpt-5` | $1.25 | $0.125 | — | $10.00 |
+| `gpt-5-mini` | $0.25 | $0.025 | — | $2.00 |
+| `gpt-4.1` | $2.00 | $0.50 | — | $8.00 |
+| `gpt-4.1-mini` | $0.40 | $0.10 | — | $1.60 |
+| `gpt-4o` | $2.50 | $1.25 | — | $10.00 |
+| `gpt-4o-mini` | $0.15 | $0.075 | — | $0.60 |
+| `o3` | $2.00 | $0.50 | — | $8.00 |
+| `claude-fable-5.2` | $8.00 | $0.20 | $10.00 | $40.00 |
+| `claude-opus-5.5` | $4.00 | $0.20 | $5.00 | $20.00 |
+| `claude-opus-5` | $5.00 | $0.50 | $6.25 | $25.00 |
+| `claude-opus-4.8` | $5.00 | $0.50 | $6.25 | $25.00 |
+| `claude-opus-4.6` | $5.00 | $0.50 | $6.25 | $25.00 |
+| `claude-sonnet-5.5` | $2.00 | $0.10 | $2.50 | $10.00 |
+| `claude-sonnet-5` | $2.00 | $0.20 | $2.50 | $10.00 |
+| `claude-sonnet-4.6` | $3.00 | $0.30 | $3.75 | $15.00 |
+| `claude-haiku-5.5` | $0.10 | $0.01 | $0.125 | $0.50 (over 100K-token prompts: $0.50 / $0.05 / $2.50) |
+| `claude-haiku-4.5` | $1.00 | $0.10 | $1.25 | $5.00 |
+| `gemini-4-carbon` | $2.00 | $0.10 | — | $10.00 |
+| `gemini-4-argon` | $2.00 | $0.10 | — | $10.00 |
+| `gemini-4-hydrogen` | $1.50 | $0.075 | — | $7.50 |
+| `gemini-3.8-flash` | $0.75 | $0.075 | — | $3.75 |
+| `gemini-3.5-flash-lite` | $0.30 | $0.03 | — | $2.50 |
+| `gemini-3.1-pro` | $2.00 | $0.20 | — | $12.00 |
+| `gemini-3.1-flash-lite` | $0.25 | $0.025 | — | $1.50 |
+| `gemini-3-flash` | $0.50 | $0.05 | — | $3.00 |
+| `gemini-2.5-pro` | $1.25 | $0.125 | — | $10.00 |
+| `gemini-2.5-flash` | $0.30 | $0.03 | — | $2.50 |
+| `grok-4.7` | $2.00 | $0.50 | — | $6.00 (over 200K-token prompts: $4.00 / $1.00 / $12.00) |
+| `grok-4.3` | $1.25 | $0.3125 | — | $2.50 |
+| `grok-build-0.1` | $1.00 | $0.25 | — | $2.00 |
+| `deepseek-v4-pro` | $0.66 | $0.066 | — | $1.98 |
+| `deepseek-flash` | $0.15 | $0.015 | — | $0.60 |
+| `mistral-large-3` | $0.50 | — | — | $1.50 |
+| `llama-4-maverick` | $0.15 | — | — | $0.60 |
 
 ## Windows Auto-Start
 
@@ -334,6 +336,14 @@ By default, local cost uses **flat per-token pricing** (configurable in settings
 - Output: $0.10 per million tokens
 
 This accounts for hardware amortization, not just electricity. Pure electricity cost is also computed (GPU watts x time x $/kWh) but it's vanishingly small for local inference (~$0.000004/request).
+
+## How Cloud Cost is Calculated
+
+**Prompt caching.** Goose resends the whole conversation on every turn, so most input tokens are a repeat of the previous request. Every major cloud API serves a repeated prefix from its prompt cache at a steep discount (often 90% or more off), so pricing every input token at the full rate would overstate the cloud cost several times over. For each request the tracker estimates how much of the prompt a cloud provider would have cached: the longest earlier prompt in the same Goose session (plus its reply) that started within the cache lifetime (`promptCacheTtlMinutes`, 5 minutes by default) and fits inside the current prompt. Prompts under 1,024 tokens are never cached. It's an estimate: it assumes the conversation grows by appending, which is how agents work.
+
+**Prices are recorded per request.** Each request stores the comparison model and the rates it was priced at. Changing `defaultCompareModel` or a model's price only affects new requests, so your savings history doesn't shift when you change settings or when prices change. The Summary cards add up these recorded costs; the cost comparison table prices your history against today's rates for each model you select.
+
+**Not modelled:** batch and priority tiers, regional surcharges, time-of-day pricing (DeepSeek peak hours), and the extra cost of a cache miss after a pause longer than the cache lifetime beyond the normal input rate.
 
 ## How Goose Token Numbers Work
 
