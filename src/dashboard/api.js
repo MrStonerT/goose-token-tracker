@@ -12,6 +12,17 @@ const CONFIG_PATH = path.join(__dirname, '..', '..', 'config.json');
 
 const router = express.Router();
 
+/** Group rows by a key function. */
+function groupBy(rows, keyFn) {
+  const groups = new Map();
+  for (const r of rows) {
+    const k = keyFn(r);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  }
+  return groups;
+}
+
 // JSON body parsing for settings POST
 router.use(express.json());
 
@@ -20,23 +31,21 @@ router.get('/stats', (req, res) => {
   const since = req.query.since || 'all';
   const stats = database.getStats(since);
 
-  // Recompute cloud cost dynamically using current default model
-  // (the DB stores cloud cost from whatever model was default at request time)
-  const liveCloudCost = tracker.computeCloudCost(
-    stats.total_prompt_tokens, stats.total_completion_tokens
-  );
-  const liveLocalCost = tracker.computeLocalCost(
-    stats.total_prompt_tokens, stats.total_completion_tokens
-  );
-
-  // Include current local pricing for the dashboard label
+  // Costs are summed from what each request was priced at when it ran, so
+  // changing the comparison model or its price never rewrites past savings.
+  // The current-price figure is included for reference.
   const localPricing = config.localModelPricing?.default || { inputPerMillion: 0.02, outputPerMillion: 0.10 };
+  const rows = database.getCostRows(since);
+  const current = tracker.sumAllCloudCosts(rows);
+  const cloudAtCurrentPrice = current.costs[config.defaultCompareModel] || 0;
+  const cachedTokens = rows.reduce((n, r) => n + (r.cached_tokens || 0), 0);
 
   res.json({
     ...stats,
-    total_local_cost: liveLocalCost,
-    total_cloud_cost: liveCloudCost,
-    savings: liveCloudCost - liveLocalCost,
+    savings: stats.total_cloud_cost - stats.total_local_cost,
+    cloud_cost_at_current_price: cloudAtCurrentPrice,
+    total_cached_tokens: cachedTokens,
+    cloud_models_used: database.getCloudModelsUsed(since),
     local_input_per_million: localPricing.inputPerMillion,
     local_output_per_million: localPricing.outputPerMillion,
     period: since
@@ -90,12 +99,12 @@ router.get('/trends/daily', (req, res) => {
 // GET /api/cost-comparison?models=gpt-4o,claude-sonnet-4
 router.get('/cost-comparison', (req, res) => {
   const breakdown = database.getCostComparison();
-  const allCloudCosts = {};
+  const byModel = groupBy(database.getCostRows('all'), r => r.model);
 
-  // Compute all cloud costs for the full model list
+  // Price each request individually (prompt caching, long-context rates)
   const enriched = breakdown.map(row => {
-    const cloudCosts = tracker.computeAllCloudCosts(row.total_prompt_tokens, row.total_completion_tokens);
-    return { ...row, cloud_costs: cloudCosts };
+    const { costs, parts } = tracker.sumAllCloudCosts(byModel.get(row.model) || []);
+    return { ...row, cloud_costs: costs, cloud_cost_parts: parts };
   });
 
   res.json(enriched);
@@ -354,14 +363,14 @@ router.get('/chats', (req, res) => {
   // Also get Goose sessions we haven't tracked yet (for complete picture)
   const allGooseSessions = gooseSessions.getAllSessions();
 
+  const bySession = groupBy(database.getCostRows('all'), r => r.session_id);
+
   // Merge tracked data with Goose metadata
   const chats = trackedSessions
     .filter(s => s.session_id && s.session_id !== 'null')
     .map(s => {
       const goose = gooseInfo[s.session_id] || {};
-      const allCloudCosts = tracker.computeAllCloudCosts(
-        s.total_prompt_tokens, s.total_completion_tokens
-      );
+      const allCloudCosts = tracker.sumAllCloudCosts(bySession.get(s.session_id) || []).costs;
       return {
         session_id: s.session_id,
         name: goose.name || s.session_id,
@@ -435,7 +444,10 @@ router.get('/chats/:sessionId', (req, res) => {
 
   // Compute totals from proxy-tracked requests
   let totalPrompt = 0, totalCompletion = 0, totalLatency = 0, totalTps = 0;
+  let recordedLocal = 0, recordedCloud = 0;
   for (const r of requests) {
+    recordedLocal += r.estimated_local_cost;
+    recordedCloud += r.estimated_cloud_cost;
     totalPrompt += r.prompt_tokens;
     totalCompletion += r.completion_tokens;
     totalLatency += r.latency_ms;
@@ -451,8 +463,13 @@ router.get('/chats/:sessionId', (req, res) => {
 
   const avgLatency = requests.length > 0 ? totalLatency / requests.length : 0;
   const avgTps = requests.length > 0 ? totalTps / requests.length : 0;
-  const localCost = tracker.computeLocalCost(totalPrompt, totalCompletion);
-  const allCloudCosts = tracker.computeAllCloudCosts(totalPrompt, totalCompletion);
+  // Tracked chats use the prices recorded with each request; Goose-only chats
+  // have no recorded prices, so they use today's.
+  const localCost = gooseOnly ? tracker.computeLocalCost(totalPrompt, totalCompletion) : recordedLocal;
+  const recordedCloudCost = gooseOnly ? tracker.computeCloudCost(totalPrompt, totalCompletion) : recordedCloud;
+  const allCloudCosts = gooseOnly
+    ? tracker.computeAllCloudCosts(totalPrompt, totalCompletion)
+    : tracker.sumAllCloudCosts(requests).costs;
 
   res.json({
     session_id: sessionId,
@@ -470,8 +487,9 @@ router.get('/chats/:sessionId', (req, res) => {
     avg_latency_ms: Math.round(avgLatency),
     avg_tokens_per_second: Math.round(avgTps * 100) / 100,
     local_cost: localCost,
+    cloud_cost: recordedCloudCost,
     cloud_costs: allCloudCosts,
-    savings: (allCloudCosts[config.defaultCompareModel] || 0) - localCost,
+    savings: recordedCloudCost - localCost,
     goose_only: !!gooseOnly,
     requests
   });

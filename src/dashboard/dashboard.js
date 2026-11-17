@@ -118,8 +118,12 @@ async function updateStats() {
   const outPrice = stats.local_output_per_million;
   document.getElementById('local-pricing-label').textContent =
     t('stats.pricingLabel', { inPrice, outPrice });
-  document.getElementById('cloud-model-label').textContent =
-    t('stats.vsModel', { model: currentDefaultModel });
+  // Past requests keep the model/price they were costed at; name every
+  // model that contributed to this period's total
+  const used = (stats.cloud_models_used || []).map(m => m.cloud_model);
+  document.getElementById('cloud-model-label').textContent = used.length > 1
+    ? t('stats.vsModels', { models: used.join(' → ') })
+    : t('stats.vsModel', { model: used[0] || currentDefaultModel });
 
   const pct = stats.total_cloud_cost > 0
     ? ((stats.savings / stats.total_cloud_cost) * 100).toFixed(1)
@@ -271,7 +275,8 @@ async function updateCostComparison() {
   // Build dynamic header — each cloud model gets two sub-columns (in/out + total)
   const modelHeaders = selectedCompareModels.map(m => {
     const p = pricingLookup[m];
-    const sub = p ? `<div class="cost-col-pricing">$${p.inputPerMillion} in / $${p.outputPerMillion} out</div>` : '';
+    const cached = p && p.cachedInputPerMillion !== undefined ? ` / $${p.cachedInputPerMillion} cached` : '';
+    const sub = p ? `<div class="cost-col-pricing">$${p.inputPerMillion} in${cached} / $${p.outputPerMillion} out</div>` : '';
     return `<th class="cost-model-col"><div>${esc(m)}</div>${sub}</th>`;
   }).join('');
 
@@ -296,7 +301,8 @@ async function updateCostComparison() {
   let totalPrompt = 0, totalCompletion = 0;
   let totalLocal = 0;
   const totalCloud = {};
-  selectedCompareModels.forEach(m => totalCloud[m] = 0);
+  const totalCloudParts = {};
+  selectedCompareModels.forEach(m => { totalCloud[m] = 0; totalCloudParts[m] = { input: 0, output: 0 }; });
 
   tbody.innerHTML = data.map(row => {
     totalPrompt += row.total_prompt_tokens;
@@ -306,20 +312,17 @@ async function updateCostComparison() {
     const cloudCells = selectedCompareModels.map(m => {
       const cost = row.cloud_costs?.[m] || 0;
       totalCloud[m] = (totalCloud[m] || 0) + cost;
-      // Compute per-model in/out breakdown
-      const p = pricingLookup[m];
-      let inCost = 0, outCost = 0;
-      if (p) {
-        inCost = (row.total_prompt_tokens / 1_000_000) * p.inputPerMillion;
-        outCost = (row.total_completion_tokens / 1_000_000) * p.outputPerMillion;
-      }
+      // Per-model in/out breakdown, priced per request by the API
+      const part = row.cloud_cost_parts?.[m] || { input: 0, output: 0 };
+      const inCost = part.input, outCost = part.output;
+      totalCloudParts[m].input += inCost;
+      totalCloudParts[m].output += outCost;
       return `<td><span class="cost-total">${fmtCost(cost)}</span><span class="cost-breakdown">${fmtCost(inCost)} + ${fmtCost(outCost)}</span></td>`;
     }).join('');
 
     // Local in/out breakdown
-    const localPricing = { inputPerMillion: 0.02, outputPerMillion: 0.10 }; // fallback
-    const localInCost = (row.total_prompt_tokens / 1_000_000) * (localPricing.inputPerMillion);
-    const localOutCost = (row.total_completion_tokens / 1_000_000) * (localPricing.outputPerMillion);
+    const localOutCost = row.local_output_cost || 0;
+    const localInCost = row.total_local_cost - localOutCost;
 
     // Best savings = max cloud cost - local cost
     const maxCloud = Math.max(...selectedCompareModels.map(m => row.cloud_costs?.[m] || 0));
@@ -338,12 +341,7 @@ async function updateCostComparison() {
 
   // Totals row
   const totalCloudCells = selectedCompareModels.map(m => {
-    const p = pricingLookup[m];
-    let inCost = 0, outCost = 0;
-    if (p) {
-      inCost = (totalPrompt / 1_000_000) * p.inputPerMillion;
-      outCost = (totalCompletion / 1_000_000) * p.outputPerMillion;
-    }
+    const inCost = totalCloudParts[m].input, outCost = totalCloudParts[m].output;
     return `<td><span class="cost-total">${fmtCost(totalCloud[m] || 0)}</span><span class="cost-breakdown">${fmtCost(inCost)} + ${fmtCost(outCost)}</span></td>`;
   }).join('');
   const maxTotalCloud = Math.max(...selectedCompareModels.map(m => totalCloud[m] || 0));
@@ -1062,8 +1060,8 @@ window.openChatDetail = async function(sessionId) {
 
   nameEl.textContent = data.name || sessionId;
 
-  const defaultCloud = data.cloud_costs[selectedCompareModels[0]] || data.cloud_costs['gpt-4o'] || 0;
-  const savings = defaultCloud - data.local_cost;
+  // Saved = what the chat was priced at when it ran (same basis as the chat list)
+  const savings = data.savings || 0;
   const project = projectName(data.working_dir);
 
   const gooseOnlyNote = data.goose_only

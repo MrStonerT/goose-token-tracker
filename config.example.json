@@ -20,179 +20,246 @@
   "cloudComparisonModels": {
     "gpt-6-astra": {
       "inputPerMillion": 10,
-      "outputPerMillion": 50
+      "outputPerMillion": 50,
+      "cachedInputPerMillion": 1
     },
     "gpt-6.1-sol": {
       "inputPerMillion": 2,
-      "outputPerMillion": 10
+      "outputPerMillion": 10,
+      "cachedInputPerMillion": 0.1
     },
     "gpt-6.1-terra": {
       "inputPerMillion": 1,
-      "outputPerMillion": 5
+      "outputPerMillion": 5,
+      "cachedInputPerMillion": 0.05
     },
     "gpt-6-luna": {
       "inputPerMillion": 0.1,
-      "outputPerMillion": 0.5
+      "outputPerMillion": 0.5,
+      "cachedInputPerMillion": 0.01
     },
     "gpt-5.6-sol": {
       "inputPerMillion": 4,
-      "outputPerMillion": 20
+      "outputPerMillion": 20,
+      "cachedInputPerMillion": 0.4
     },
     "gpt-5.6-terra": {
       "inputPerMillion": 2,
-      "outputPerMillion": 12
+      "outputPerMillion": 12,
+      "cachedInputPerMillion": 0.2
     },
     "gpt-5.6-luna": {
       "inputPerMillion": 0.2,
-      "outputPerMillion": 1.2
+      "outputPerMillion": 1.2,
+      "cachedInputPerMillion": 0.02
     },
     "gpt-5.5": {
       "inputPerMillion": 5,
-      "outputPerMillion": 30
+      "outputPerMillion": 30,
+      "cachedInputPerMillion": 0.5
     },
     "gpt-5.4": {
       "inputPerMillion": 2.5,
-      "outputPerMillion": 15
+      "outputPerMillion": 15,
+      "cachedInputPerMillion": 0.25
     },
     "gpt-5.4-mini": {
       "inputPerMillion": 0.75,
-      "outputPerMillion": 4.5
+      "outputPerMillion": 4.5,
+      "cachedInputPerMillion": 0.075
     },
     "gpt-5.3-codex": {
       "inputPerMillion": 1.75,
-      "outputPerMillion": 14
+      "outputPerMillion": 14,
+      "cachedInputPerMillion": 0.175
     },
     "gpt-5.2": {
       "inputPerMillion": 1.75,
-      "outputPerMillion": 14
+      "outputPerMillion": 14,
+      "cachedInputPerMillion": 0.175
     },
     "gpt-5": {
       "inputPerMillion": 1.25,
-      "outputPerMillion": 10
+      "outputPerMillion": 10,
+      "cachedInputPerMillion": 0.125
     },
     "gpt-5-mini": {
       "inputPerMillion": 0.25,
-      "outputPerMillion": 2
+      "outputPerMillion": 2,
+      "cachedInputPerMillion": 0.025
     },
     "gpt-4.1": {
       "inputPerMillion": 2,
-      "outputPerMillion": 8
+      "outputPerMillion": 8,
+      "cachedInputPerMillion": 0.5
     },
     "gpt-4.1-mini": {
       "inputPerMillion": 0.4,
-      "outputPerMillion": 1.6
+      "outputPerMillion": 1.6,
+      "cachedInputPerMillion": 0.1
     },
     "gpt-4o": {
       "inputPerMillion": 2.5,
-      "outputPerMillion": 10
+      "outputPerMillion": 10,
+      "cachedInputPerMillion": 1.25
     },
     "gpt-4o-mini": {
       "inputPerMillion": 0.15,
-      "outputPerMillion": 0.6
+      "outputPerMillion": 0.6,
+      "cachedInputPerMillion": 0.075
     },
     "o3": {
       "inputPerMillion": 2,
-      "outputPerMillion": 8
+      "outputPerMillion": 8,
+      "cachedInputPerMillion": 0.5
     },
     "claude-fable-5.2": {
       "inputPerMillion": 8,
-      "outputPerMillion": 40
+      "outputPerMillion": 40,
+      "cachedInputPerMillion": 0.2,
+      "cacheWritePerMillion": 10
     },
     "claude-opus-5.5": {
       "inputPerMillion": 4,
-      "outputPerMillion": 20
+      "outputPerMillion": 20,
+      "cachedInputPerMillion": 0.2,
+      "cacheWritePerMillion": 5
     },
     "claude-opus-5": {
       "inputPerMillion": 5,
-      "outputPerMillion": 25
+      "outputPerMillion": 25,
+      "cachedInputPerMillion": 0.5,
+      "cacheWritePerMillion": 6.25
     },
     "claude-opus-4.8": {
       "inputPerMillion": 5,
-      "outputPerMillion": 25
+      "outputPerMillion": 25,
+      "cachedInputPerMillion": 0.5,
+      "cacheWritePerMillion": 6.25
     },
     "claude-opus-4.6": {
       "inputPerMillion": 5,
-      "outputPerMillion": 25
+      "outputPerMillion": 25,
+      "cachedInputPerMillion": 0.5,
+      "cacheWritePerMillion": 6.25
     },
     "claude-sonnet-5.5": {
       "inputPerMillion": 2,
-      "outputPerMillion": 10
+      "outputPerMillion": 10,
+      "cachedInputPerMillion": 0.1,
+      "cacheWritePerMillion": 2.5
     },
     "claude-sonnet-5": {
       "inputPerMillion": 2,
-      "outputPerMillion": 10
+      "outputPerMillion": 10,
+      "cachedInputPerMillion": 0.2,
+      "cacheWritePerMillion": 2.5
     },
     "claude-sonnet-4.6": {
       "inputPerMillion": 3,
-      "outputPerMillion": 15
+      "outputPerMillion": 15,
+      "cachedInputPerMillion": 0.3,
+      "cacheWritePerMillion": 3.75
     },
     "claude-haiku-5.5": {
       "inputPerMillion": 0.1,
-      "outputPerMillion": 0.5
+      "outputPerMillion": 0.5,
+      "cachedInputPerMillion": 0.01,
+      "cacheWritePerMillion": 0.125,
+      "longContext": {
+        "overTokens": 100000,
+        "inputPerMillion": 0.5,
+        "outputPerMillion": 2.5,
+        "cachedInputPerMillion": 0.05,
+        "cacheWritePerMillion": 0.625
+      }
     },
     "claude-haiku-4.5": {
       "inputPerMillion": 1,
-      "outputPerMillion": 5
+      "outputPerMillion": 5,
+      "cachedInputPerMillion": 0.1,
+      "cacheWritePerMillion": 1.25
     },
     "gemini-4-carbon": {
       "inputPerMillion": 2,
-      "outputPerMillion": 10
+      "outputPerMillion": 10,
+      "cachedInputPerMillion": 0.1
     },
     "gemini-4-argon": {
       "inputPerMillion": 2,
-      "outputPerMillion": 10
+      "outputPerMillion": 10,
+      "cachedInputPerMillion": 0.1
     },
     "gemini-4-hydrogen": {
       "inputPerMillion": 1.5,
-      "outputPerMillion": 7.5
+      "outputPerMillion": 7.5,
+      "cachedInputPerMillion": 0.075
     },
     "gemini-3.8-flash": {
       "inputPerMillion": 0.75,
-      "outputPerMillion": 3.75
+      "outputPerMillion": 3.75,
+      "cachedInputPerMillion": 0.075
     },
     "gemini-3.5-flash-lite": {
       "inputPerMillion": 0.3,
-      "outputPerMillion": 2.5
+      "outputPerMillion": 2.5,
+      "cachedInputPerMillion": 0.03
     },
     "gemini-3.1-pro": {
       "inputPerMillion": 2,
-      "outputPerMillion": 12
+      "outputPerMillion": 12,
+      "cachedInputPerMillion": 0.2
     },
     "gemini-3.1-flash-lite": {
       "inputPerMillion": 0.25,
-      "outputPerMillion": 1.5
+      "outputPerMillion": 1.5,
+      "cachedInputPerMillion": 0.025
     },
     "gemini-3-flash": {
       "inputPerMillion": 0.5,
-      "outputPerMillion": 3
+      "outputPerMillion": 3,
+      "cachedInputPerMillion": 0.05
     },
     "gemini-2.5-pro": {
       "inputPerMillion": 1.25,
-      "outputPerMillion": 10
+      "outputPerMillion": 10,
+      "cachedInputPerMillion": 0.125
     },
     "gemini-2.5-flash": {
       "inputPerMillion": 0.3,
-      "outputPerMillion": 2.5
+      "outputPerMillion": 2.5,
+      "cachedInputPerMillion": 0.03
     },
     "grok-4.7": {
       "inputPerMillion": 2,
-      "outputPerMillion": 6
+      "outputPerMillion": 6,
+      "cachedInputPerMillion": 0.5,
+      "longContext": {
+        "overTokens": 200000,
+        "inputPerMillion": 4,
+        "outputPerMillion": 12,
+        "cachedInputPerMillion": 1
+      }
     },
     "grok-4.3": {
       "inputPerMillion": 1.25,
-      "outputPerMillion": 2.5
+      "outputPerMillion": 2.5,
+      "cachedInputPerMillion": 0.3125
     },
     "grok-build-0.1": {
       "inputPerMillion": 1,
-      "outputPerMillion": 2
+      "outputPerMillion": 2,
+      "cachedInputPerMillion": 0.25
     },
     "deepseek-v4-pro": {
       "inputPerMillion": 0.66,
-      "outputPerMillion": 1.98
+      "outputPerMillion": 1.98,
+      "cachedInputPerMillion": 0.066
     },
     "deepseek-flash": {
       "inputPerMillion": 0.15,
-      "outputPerMillion": 0.6
+      "outputPerMillion": 0.6,
+      "cachedInputPerMillion": 0.015
     },
     "mistral-large-3": {
       "inputPerMillion": 0.5,
@@ -210,5 +277,6 @@
     "claude-sonnet-5.5",
     "gemini-4-argon",
     "deepseek-v4-pro"
-  ]
+  ],
+  "promptCacheTtlMinutes": 5
 }
